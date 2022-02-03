@@ -1,7 +1,7 @@
 ---
-title: "Study 3: Mixed Effects Modeling"
-subtitle: "Vis 2020 Belief Correlation Paper (Karduni et al., 2020)"
-output: html_document
+title: 'Study 3: Mixed Effects Modeling'
+subtitle: Vis 2020 Belief Correlation Paper (Karduni et al., 2020)
+output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -99,6 +99,7 @@ But remember - convergence doesn't mean great fit. Let's evaluate overfitting wi
 ```{r}
 pp_check(bm)
 ```
+
 There looks like some misspecification.
 
 Let's try instead a lognormal likelihood.
@@ -126,8 +127,9 @@ conditional_effects(bm) # conditions = data.frame(size = 1)
 But let's now look at the posterior predictive check.
 
 ```{r}
-pp_check(bm2) + xlim(0,2)
+pp_check(bm2) + xlim(-1,3)
 ```
+
 Better -- but we're still overfitting. It appears to be bimodal.
 
 This may be a solution to do a Bayesian mixture for lognormal. [Chapter 20 of "An Introduction to Bayesian Data Analysis for Cognitive Science" ](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-speed-accuracy-trade-off-the-fast-guess-model-account.html)
