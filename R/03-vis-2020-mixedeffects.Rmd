@@ -1,0 +1,134 @@
+---
+title: "Study 3: Mixed Effects Modeling"
+subtitle: "Vis 2020 Belief Correlation Paper (Karduni et al., 2020)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## 1. Import Packages
+
+```{r load-packages}
+library(ggplot2)
+library(statsr)
+library(lme4)
+library(sjPlot)
+theme_set(theme_sjplot())
+```
+
+## 2. Load Data
+
+```{r load-data}
+df <- read.csv(file="../data/vis2020/data_exclude_mturk2020-04-26.csv")
+
+# refactor and categorize
+df$visGroup <- factor(df$visGroup, c("line","band","hop"))
+df$nDataShown <- factor(df$nDataShown)
+```
+
+## 3. Exploratory Graphs
+
+```{r}
+ggplot(df,aes(x=uncertaintyShown,fill=nDataShown)) + 
+  geom_density(alpha=0.5)
+```
+
+```{r}
+ggplot(df,aes(x=preBeliefDistance,fill=congruency)) + 
+  geom_density(alpha=0.5)
+```
+
+## 4. Mixed Effects Modeling (`lme4`)
+
+```{r lme4-modeling}
+# Absolute Belief Distance
+m = lmer(diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  +  (1|usertoken) + (1|vars),df)
+# Uncertainty Difference
+m1 = lmer(diffUncertainty ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  + (1|usertoken) + (1|vars),df)
+# Post Belief Distance 
+m3 = lmer(postBeliefDistance ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  +  (1|usertoken) + (1|vars),df)
+```
+
+```{r}
+plot_model(m,show.values = TRUE, value.offset = .3,type="est" ) + ylim(-0.25,0.85)
+```
+
+```{r}
+plot_model(m1, vline.color = "red", show.values = TRUE, value.offset = .3 ) + ylim(-.3,.3)
+```
+
+```{r}
+plot_model(m3, vline.color = "red", show.values = TRUE, value.offset = .3 ) + ylim(-.2,.2)
+```
+
+## 5. Bayesian Mixed Effects
+
+For the Vis 2020 paper, we did not run a Bayesian mixed effects model. 
+
+Let's examine the first regression to estimate the effect on the absolute belief change (`diffBeliefAbs`). We'll use the same functional form as model `m`.
+
+```{r}
+library(brms)
+
+bm <- brms::brm(diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+```
+
+First let's look at metadata around the model.
+
+```{r}
+bm
+```
+
+Notice that the coefficients are very similar to Frequentist:
+
+```{r}
+m
+```
+
+
+The convergence stats also look good - Rhat's are at 1 and we have "fuzzy catepillars". 
+
+```{r}
+plot(bm)
+```
+
+But remember - convergence doesn't mean great fit. Let's evaluate overfitting with Posterior Predictive Checks. We'll do 10 draws and compare to actual. 
+
+```{r}
+pp_check(bm)
+```
+There looks like some misspecification.
+
+Let's try instead a lognormal likelihood.
+
+```{r}
+
+df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
+
+bm2 <- brms::brm(diffBeliefAbsAdjusted ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = lognormal(link = "identity", link_sigma = "log"))
+```
+
+
+
+```{r}
+bm2
+```
+
+
+We can also view the conditional effects:
+
+```{r}
+conditional_effects(bm) # conditions = data.frame(size = 1)
+```
+
+But let's now look at the posterior predictive check.
+
+```{r}
+pp_check(bm2) + xlim(0,2)
+```
+Better -- but we're still overfitting. It appears to be bimodal.
+
+This may be a solution to do a Bayesian mixture for lognormal. [Chapter 20 of "An Introduction to Bayesian Data Analysis for Cognitive Science" ](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-speed-accuracy-trade-off-the-fast-guess-model-account.html)
+
