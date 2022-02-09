@@ -16,7 +16,7 @@ theme_set(theme_sjplot())
 ## 2. Load Data
 
 ``` r
-df <- read.csv(file="../data/vis2020/data_exclude_mturk2020-04-26.csv")
+df <- read.csv(file="../data/vis2020/data_exclude.csv")
 
 # refactor and categorize
 df$visGroup <- factor(df$visGroup, c("line","band","hop"))
@@ -102,6 +102,134 @@ Let’s examine the first regression to estimate the effect on the
 absolute belief change (`diffBeliefAbs`). We’ll use the same functional
 form as model `m`.
 
+``` r
+library(brms)
+
+bm <- brms::brm(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+```
+
+    ## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
+    ## clang -arch arm64 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/unsupported"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppParallel/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/arm64/include   -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
+    ## In file included from <built-in>:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:88:
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
+    ## namespace Eigen {
+    ## ^
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
+    ## namespace Eigen {
+    ##                ^
+    ##                ;
+    ## In file included from <built-in>:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
+    ## #include <complex>
+    ##          ^~~~~~~~~
+    ## 3 errors generated.
+    ## make: *** [foo.o] Error 1
+    ## 
+    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 1).
+    ## Chain 1: 
+    ## Chain 1: Gradient evaluation took 0.000255 seconds
+    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.55 seconds.
+    ## Chain 1: Adjust your expectations accordingly!
+    ## Chain 1: 
+    ## Chain 1: 
+    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 1: 
+    ## Chain 1:  Elapsed Time: 9.67148 seconds (Warm-up)
+    ## Chain 1:                5.15899 seconds (Sampling)
+    ## Chain 1:                14.8305 seconds (Total)
+    ## Chain 1: 
+    ## 
+    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 2).
+    ## Chain 2: 
+    ## Chain 2: Gradient evaluation took 0.000158 seconds
+    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.58 seconds.
+    ## Chain 2: Adjust your expectations accordingly!
+    ## Chain 2: 
+    ## Chain 2: 
+    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 2: 
+    ## Chain 2:  Elapsed Time: 9.63505 seconds (Warm-up)
+    ## Chain 2:                5.05123 seconds (Sampling)
+    ## Chain 2:                14.6863 seconds (Total)
+    ## Chain 2: 
+    ## 
+    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 3).
+    ## Chain 3: 
+    ## Chain 3: Gradient evaluation took 0.000157 seconds
+    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.57 seconds.
+    ## Chain 3: Adjust your expectations accordingly!
+    ## Chain 3: 
+    ## Chain 3: 
+    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 3: 
+    ## Chain 3:  Elapsed Time: 9.64559 seconds (Warm-up)
+    ## Chain 3:                4.96968 seconds (Sampling)
+    ## Chain 3:                14.6153 seconds (Total)
+    ## Chain 3: 
+    ## 
+    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 4).
+    ## Chain 4: 
+    ## Chain 4: Gradient evaluation took 0.000172 seconds
+    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.72 seconds.
+    ## Chain 4: Adjust your expectations accordingly!
+    ## Chain 4: 
+    ## Chain 4: 
+    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 4: 
+    ## Chain 4:  Elapsed Time: 9.99218 seconds (Warm-up)
+    ## Chain 4:                5.06903 seconds (Sampling)
+    ## Chain 4:                15.0612 seconds (Total)
+    ## Chain 4:
+
 First let’s look at metadata around the model.
 
 ``` r
@@ -133,16 +261,16 @@ joined_models %>%
 
 | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
 |-------------------:|---------------:|----------:|
-|          0.1388010 |      0.1358401 |     0.003 |
-|          0.7178997 |      0.7231434 |     0.005 |
-|         -0.0156738 |     -0.0188768 |     0.003 |
-|         -0.0260823 |     -0.0249925 |     0.001 |
-|         -0.0035645 |     -0.0039647 |     0.000 |
-|         -0.1170579 |     -0.1162205 |     0.001 |
-|          0.0243800 |      0.0247423 |     0.000 |
-|          0.0978748 |      0.0977617 |     0.000 |
-|         -0.1126694 |     -0.1122588 |     0.000 |
-|         -0.0748911 |     -0.0744954 |     0.000 |
+|          0.1382383 |      0.1340957 |     0.004 |
+|          0.7193759 |      0.7252758 |     0.006 |
+|         -0.0170234 |     -0.0210087 |     0.004 |
+|         -0.0250486 |     -0.0226014 |     0.002 |
+|         -0.0046405 |     -0.0034115 |     0.001 |
+|         -0.1171013 |     -0.1171506 |     0.000 |
+|          0.0248408 |      0.0244427 |     0.000 |
+|          0.0951004 |      0.0951972 |     0.000 |
+|         -0.1125716 |     -0.1128555 |     0.000 |
+|         -0.0702860 |     -0.0699720 |     0.000 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -157,16 +285,16 @@ joined_models %>%
 
 | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
 |----------------:|------------:|-----------------:|
-|       0.0400840 |   0.0366095 |            0.003 |
-|       0.0506850 |   0.0421795 |            0.009 |
-|       0.0503724 |   0.0441377 |            0.006 |
-|       0.0394864 |   0.0366809 |            0.003 |
-|       0.0391714 |   0.0393106 |            0.000 |
-|       0.0351493 |   0.0356856 |            0.001 |
-|       0.0307691 |   0.0314600 |            0.001 |
-|       0.0393568 |   0.0400026 |            0.001 |
-|       0.0352750 |   0.0359997 |            0.001 |
-|       0.0324932 |   0.0323808 |            0.000 |
+|       0.0399810 |   0.0364427 |            0.004 |
+|       0.0506123 |   0.0420362 |            0.009 |
+|       0.0506271 |   0.0439540 |            0.007 |
+|       0.0387089 |   0.0364888 |            0.002 |
+|       0.0391010 |   0.0390879 |            0.000 |
+|       0.0357425 |   0.0354924 |            0.000 |
+|       0.0313559 |   0.0313056 |            0.000 |
+|       0.0395057 |   0.0396635 |            0.000 |
+|       0.0360918 |   0.0357082 |            0.000 |
+|       0.0316552 |   0.0320763 |            0.000 |
 
 ### Model convergence / posterior predictive check
 
@@ -238,6 +366,8 @@ bm2$prior
     ##                        (vectorized)
     ##                             default
 
+### What are the coefficients?
+
 ``` r
 coefplot(bm2)
 ```
@@ -255,12 +385,12 @@ print(looNormal)
 ```
 
     ## 
-    ## Computed from 4000 by 4228 log-likelihood matrix
+    ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1822.4  75.8
-    ## p_loo       216.1   7.6
-    ## looic      3644.9 151.7
+    ## elpd_loo  -1826.5  76.4
+    ## p_loo       218.8   7.7
+    ## looic      3652.9 152.7
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -273,12 +403,12 @@ print(looNormal)
 ```
 
     ## 
-    ## Computed from 4000 by 4228 log-likelihood matrix
+    ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1822.4  75.8
-    ## p_loo       216.1   7.6
-    ## looic      3644.9 151.7
+    ## elpd_loo  -1826.5  76.4
+    ## p_loo       218.8   7.7
+    ## looic      3652.9 152.7
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -291,16 +421,23 @@ print(looLog)
 ```
 
     ## 
-    ## Computed from 4000 by 4228 log-likelihood matrix
+    ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1459.2  80.8
-    ## p_loo       202.7   7.1
-    ## looic      2918.5 161.7
+    ## elpd_loo  -1466.4  81.1
+    ## p_loo       203.8   7.1
+    ## looic      2932.9 162.2
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## All Pareto k estimates are good (k < 0.5).
+    ## Pareto k diagnostic values:
+    ##                          Count Pct.    Min. n_eff
+    ## (-Inf, 0.5]   (good)     4259  100.0%  580       
+    ##  (0.5, 0.7]   (ok)          1    0.0%  1730      
+    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
+    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
+    ## 
+    ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
 
 When comparing two fitted models, we can estimate the difference in
@@ -313,7 +450,7 @@ loo_compare(looNormal, looLog)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -363.2      78.1
+    ## bm  -360.0      78.4
 
 WAIC criterion
 
@@ -325,7 +462,7 @@ loo_compare(waicNormal, waicLog)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -363.0      78.1
+    ## bm  -359.8      78.4
 
 As a last step, let’s do a posterior predictive check:
 
@@ -335,7 +472,8 @@ pp_check(bm2) + xlim(-1,3)
 
 ![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
-Better – but we’re still overfitting. It appears to be bimodal.
+Better – but we’re still overfitting. It appears to be bimodal, maybe
+even “tri”-modal.
 
 This may be a solution to do a Bayesian mixture for lognormal. [Chapter
 20 of “An Introduction to Bayesian Data Analysis for Cognitive
@@ -347,6 +485,136 @@ Science”](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-s
 
 Let’s now examine uncertainty difference (`diffUncertainty`). We’ll use
 the same functional form as model `m`.
+
+``` r
+bm_u <- brms::brm(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+```
+
+    ## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
+    ## clang -arch arm64 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/unsupported"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/RcppParallel/include/"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/arm64/include   -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
+    ## In file included from <built-in>:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:88:
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
+    ## namespace Eigen {
+    ## ^
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
+    ## namespace Eigen {
+    ##                ^
+    ##                ;
+    ## In file included from <built-in>:1:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
+    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
+    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
+    ## #include <complex>
+    ##          ^~~~~~~~~
+    ## 3 errors generated.
+    ## make: *** [foo.o] Error 1
+    ## 
+    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 1).
+    ## Chain 1: 
+    ## Chain 1: Gradient evaluation took 0.000289 seconds
+    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.89 seconds.
+    ## Chain 1: Adjust your expectations accordingly!
+    ## Chain 1: 
+    ## Chain 1: 
+    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 1: 
+    ## Chain 1:  Elapsed Time: 11.1987 seconds (Warm-up)
+    ## Chain 1:                5.19646 seconds (Sampling)
+    ## Chain 1:                16.3951 seconds (Total)
+    ## Chain 1: 
+    ## 
+    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 2).
+    ## Chain 2: 
+    ## Chain 2: Gradient evaluation took 0.00016 seconds
+    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.6 seconds.
+    ## Chain 2: Adjust your expectations accordingly!
+    ## Chain 2: 
+    ## Chain 2: 
+    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 2: 
+    ## Chain 2:  Elapsed Time: 11.2981 seconds (Warm-up)
+    ## Chain 2:                5.2345 seconds (Sampling)
+    ## Chain 2:                16.5326 seconds (Total)
+    ## Chain 2: 
+    ## 
+    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 3).
+    ## Chain 3: 
+    ## Chain 3: Gradient evaluation took 0.000162 seconds
+    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.62 seconds.
+    ## Chain 3: Adjust your expectations accordingly!
+    ## Chain 3: 
+    ## Chain 3: 
+    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 3: 
+    ## Chain 3:  Elapsed Time: 11.2082 seconds (Warm-up)
+    ## Chain 3:                5.21268 seconds (Sampling)
+    ## Chain 3:                16.4209 seconds (Total)
+    ## Chain 3: 
+    ## 
+    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 4).
+    ## Chain 4: 
+    ## Chain 4: Gradient evaluation took 0.000156 seconds
+    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.56 seconds.
+    ## Chain 4: Adjust your expectations accordingly!
+    ## Chain 4: 
+    ## Chain 4: 
+    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+    ## Chain 4: 
+    ## Chain 4:  Elapsed Time: 11.5681 seconds (Warm-up)
+    ## Chain 4:                5.19867 seconds (Sampling)
+    ## Chain 4:                16.7668 seconds (Total)
+    ## Chain 4:
+
+``` r
+#save(bm_u, file = "../models/bm_u.rda")
+```
 
 First let’s look at metadata around the model.
 
@@ -379,16 +647,16 @@ joined_models %>%
 
 | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
 |-------------------:|---------------:|----------:|
-|          0.0862448 |      0.0861421 |     0.000 |
-|         -0.0160765 |     -0.0155808 |     0.000 |
-|         -0.0975233 |     -0.0968443 |     0.001 |
-|         -0.1337295 |     -0.1315453 |     0.002 |
-|          0.1908725 |      0.1902755 |     0.001 |
-|         -0.0689556 |     -0.0677322 |     0.001 |
-|         -0.2006140 |     -0.2010290 |     0.000 |
-|          0.0730383 |      0.0732108 |     0.000 |
-|         -0.0069977 |     -0.0068852 |     0.000 |
-|         -0.1297138 |     -0.1297598 |     0.000 |
+|         -0.0891671 |     -0.0875698 |     0.002 |
+|          0.0131538 |      0.0120174 |     0.001 |
+|          0.1018924 |      0.1013096 |     0.001 |
+|          0.1293593 |      0.1285109 |     0.001 |
+|         -0.1862188 |     -0.1863117 |     0.000 |
+|          0.0672140 |      0.0676643 |     0.000 |
+|          0.2009528 |      0.2007491 |     0.000 |
+|         -0.0679236 |     -0.0686954 |     0.001 |
+|          0.0043500 |      0.0055774 |     0.001 |
+|          0.1301434 |      0.1298018 |     0.000 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -403,16 +671,16 @@ joined_models %>%
 
 | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
 |----------------:|------------:|-----------------:|
-|       0.0609153 |   0.0567985 |            0.004 |
-|       0.0703527 |   0.0677670 |            0.003 |
-|       0.0658322 |   0.0654230 |            0.000 |
-|       0.0545973 |   0.0541252 |            0.000 |
-|       0.0452921 |   0.0448679 |            0.000 |
-|       0.0486745 |   0.0478637 |            0.001 |
-|       0.0412439 |   0.0421794 |            0.001 |
-|       0.0457825 |   0.0456403 |            0.000 |
-|       0.0483745 |   0.0483337 |            0.000 |
-|       0.0431626 |   0.0434167 |            0.000 |
+|       0.0578988 |   0.0564353 |            0.001 |
+|       0.0689174 |   0.0673025 |            0.002 |
+|       0.0673181 |   0.0650201 |            0.002 |
+|       0.0549677 |   0.0537443 |            0.001 |
+|       0.0445922 |   0.0447271 |            0.000 |
+|       0.0475922 |   0.0475906 |            0.000 |
+|       0.0430368 |   0.0419628 |            0.001 |
+|       0.0459529 |   0.0453695 |            0.001 |
+|       0.0484136 |   0.0479265 |            0.000 |
+|       0.0445491 |   0.0430000 |            0.002 |
 
 ### Model convergence / posterior predictive check
 
@@ -486,6 +754,8 @@ bm2_u$prior
     ##                        (vectorized)
     ##                             default
 
+### What are the coefficients?
+
 ``` r
 coefplot(bm2_u)
 ```
@@ -503,12 +773,12 @@ print(looNormal_u)
 ```
 
     ## 
-    ## Computed from 4000 by 4235 log-likelihood matrix
+    ## Computed from 4000 by 4267 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -3040.4  68.0
-    ## p_loo       130.1   4.2
-    ## looic      6080.9 136.1
+    ## elpd_loo  -3052.0  68.4
+    ## p_loo       133.6   4.3
+    ## looic      6104.1 136.9
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -521,12 +791,12 @@ print(looT)
 ```
 
     ## 
-    ## Computed from 4000 by 4235 log-likelihood matrix
+    ## Computed from 4000 by 4267 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -2685.4  71.7
-    ## p_loo       146.4   1.7
-    ## looic      5370.8 143.5
+    ## elpd_loo  -2690.7  72.1
+    ## p_loo       153.3   1.7
+    ## looic      5381.4 144.3
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -543,7 +813,7 @@ loo_compare(looNormal_u, looT)
 
     ##       elpd_diff se_diff
     ## bm2_u    0.0       0.0 
-    ## bm_u  -355.1      30.7
+    ## bm_u  -361.4      31.0
 
 WAIC criterion
 
@@ -555,7 +825,7 @@ loo_compare(waicNormal_u, waicT)
 
     ##       elpd_diff se_diff
     ## bm2_u    0.0       0.0 
-    ## bm_u  -354.9      30.7
+    ## bm_u  -361.3      31.0
 
 As a last step, let’s do a posterior predictive check:
 
