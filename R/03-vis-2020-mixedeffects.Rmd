@@ -103,22 +103,27 @@ For the Vis 2020 paper, we did not run a Bayesian mixed effects model.
 
 Let's examine the first regression to estimate the effect on the absolute belief change (`diffBeliefAbs`). We'll use the same functional form as model `m`.
 
-```{r message=FALSE, warning=FALSE}
+```{r eval=FALSE, include=TRUE}
 library(brms)
 
 bm <- brms::brm(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+
+save(bm, file = "../models/fit_bm.rda")
+```
+
+```{r}
+load("../models/fit_bm.rda")
 ```
 
 First let's look at metadata around the model.
 
 ```{r}
-coefplot(bm)
+coef_bm <- coefplot(bm)
+coef_bm
 ```
 
 ```{r}
 coef_m_df <- a$data %>% rename(Parameter = term) %>% mutate(Parameter = as.character(Parameter))
-
-coef_bm <- coefplot(bm)
 
 coef_bm_df <- coef_bm$data
 coef_bm_df$Parameter[coef_bm_df$Parameter=="Intercept"] <- "(Intercept)"
@@ -132,7 +137,7 @@ Notice that the coefficients are very similar to Frequentist:
 ```{r}
 joined_models %>%
   rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
-  select(Bayesian_Estimate, Freq_Estimate) %>%
+  select(Parameter, Bayesian_Estimate, Freq_Estimate) %>%
   mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
   knitr::kable()
 ```
@@ -142,7 +147,7 @@ We see the same for the coefficients standard errors (though they mean slightly 
 ```{r}
 joined_models %>%
   rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
-  select(Bayesian_Error, Freq_Error) %>%
+  select(Parameter, Bayesian_Error, Freq_Error) %>%
   mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
   knitr::kable()
 ```
@@ -165,12 +170,18 @@ There looks like some misspecification.
 
 ### Modify response (likelihood) to lognormal
 
-Let's try instead a lognormal likelihood.
+Let's try instead a lognormal likelihood (specifically the `hurdle_lognormal` because we have a handful of cases where diffBeliefAbs equals zero (see [brms comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2)))..
 
-```{r warning=FALSE,message=FALSE,include=FALSE}
-df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
+```{r include=TRUE,eval=FALSE}
+#df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
 
-bm2 <- brms::brm(diffBeliefAbsAdjusted ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = lognormal(link = "identity", link_sigma = "log"))
+bm2 <- brms::brm(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"))
+
+save(bm2, file = "../models/fit_bm2.rda")
+```
+
+```{r}
+load("../models/fit_bm2.rda")
 ```
 
 ### What are model priors?
@@ -182,7 +193,8 @@ bm2$prior
 ### What are the coefficients?
 
 ```{r}
-coefplot(bm2)
+coef_bm2 <- coefplot(bm2)
+coef_bm2
 ```
 
 
@@ -226,10 +238,62 @@ As a last step, let's do a posterior predictive check:
 pp_check(bm2) + xlim(-1,3)
 ```
 
-Better -- but we're still overfitting. It appears to be bimodal, maybe even "tri"-modal.
+Better -- but we're still overfitting. It appears to be bimodal, maybe even "tri"-modal. We suspect this is due to the IV's, namely Belief Distance's bimodal features.
 
-This may be a solution to do a Bayesian mixture for lognormal. [Chapter 20 of "An Introduction to Bayesian Data Analysis for Cognitive Science" ](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-speed-accuracy-trade-off-the-fast-guess-model-account.html)
 
+### Compare Coefficients
+
+As a final check, let's compare the coefficients for the normal Bayesian mixed effects model and the (hurdle) Lognormal Bayesian mixed effects model.
+
+```{r}
+coef_bm_df <- coef_bm$data
+coef_bm2_df <- coef_bm2$data
+coef_bm_df$Parameter[coef_bm_df$Parameter=="Intercept"] <- "(Intercept)"
+coef_bm2_df$Parameter[coef_bm2_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_df, coef_bm2_df, by = "Parameter")
+```
+
+
+Let's examine the coefficient differences with the different likelihoods.
+
+```{r}
+un_coef <- joined_models %>%
+  rename(Normal_Estimate = Estimate.x, Lognormal_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, Lognormal_Estimate) 
+
+un_error <- joined_models %>%
+  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,Lognormal_low = `2.5%ile.y`, Lognormal_high = `97.5%ile.y`) %>%
+  select(Parameter, Normal_low, Normal_high, Lognormal_low, Lognormal_high) 
+
+var_order <- c("(Intercept)","visTreatmentCone","visTreatmentHOPs","preBeliefDistance","sampleUncertainty","visTreatmentCone:preBeliefDistance","visTreatmentHOPs:preBeliefDistance","visTreatmentCone:sampleUncertainty","visTreatmentHOPs:sampleUncertainty","preBeliefDistance:sampleUncertainty")
+
+inner_join(un_coef,un_error,by="Parameter") %>%
+  tidyr::pivot_longer(-Parameter) %>%
+  tidyr::separate(name, c("Model","Estimate"), sep = "_") %>%
+  tidyr::pivot_wider(names_from = c("Estimate")) %>%
+  mutate(Parameter = factor(Parameter, levels = rev(var_order))) %>%
+  mutate(Model = factor(Model, levels = c("Normal", "Lognormal"))) %>%
+  ggplot(aes(x = Parameter, color = Model)) +
+  geom_hline(yintercept = 0, alpha = 0.4) +
+  geom_point(aes(y = Estimate),  position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin = low, ymax = high),  position=position_dodge(.9)) +
+  theme(legend.position = c(0.2,0.2),) +
+  labs(title = "Abs Belief Difference", subtitle = "Study 3: Vary by Response Distribution") +
+  scale_color_manual(values = c("Lognormal" = "red",
+                                "Normal"="black")) +  
+  coord_flip()
+```
+
+We see the same for the coefficients standard errors:
+
+```{r}
+joined_models %>%
+  rename(Normal_Error = Est.Error.x, Lognormal_Error = Est.Error.y) %>%
+  select(Parameter, Normal_Error, Lognormal_Error) %>%
+  mutate(Diff_Error = round(Normal_Error - Lognormal_Error,3)) %>%
+  knitr::kable()
+```
 
 ## 5b. Uncertainty Difference
 
@@ -237,16 +301,21 @@ This may be a solution to do a Bayesian mixture for lognormal. [Chapter 20 of "A
 
 Let's now examine uncertainty difference (`diffUncertainty`). We'll use the same functional form as model `m`.
 
-```{r message=FALSE, warning=FALSE}
+```{r eval=FALSE,include=TRUE}
 bm_u <- brms::brm(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
 
-#save(bm_u, file = "../models/bm_u.rda")
+save(bm_u, file = "../models/fit_bm_u.rda")
+```
+
+```{r}
+load("../models/fit_bm_u.rda")
 ```
 
 First let's look at metadata around the model.
 
 ```{r}
-coefplot(bm_u)
+coef_bm_u <- coefplot(bm_u)
+coef_bm_u
 ```
 
 ```{r}
@@ -266,7 +335,7 @@ Notice that the coefficients are very similar to Frequentist:
 ```{r}
 joined_models %>%
   rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
-  select(Bayesian_Estimate, Freq_Estimate) %>%
+  select(Parameter, Bayesian_Estimate, Freq_Estimate) %>%
   mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
   knitr::kable()
 ```
@@ -276,14 +345,14 @@ We see the same for the coefficients standard errors (though they mean slightly 
 ```{r}
 joined_models %>%
   rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
-  select(Bayesian_Error, Freq_Error) %>%
+  select(Parameter, Bayesian_Error, Freq_Error) %>%
   mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
   knitr::kable()
 ```
 
 ### Model convergence / posterior predictive check
 
-The convergence stats also look good - Rhat's are at 1 and we have "fuzzy catepillars". 
+The convergence stats also look good - Rhat's are at 1 and we have "fuzzy caterpillars". 
 
 ```{r}
 plot(bm_u)
@@ -295,14 +364,20 @@ But remember - convergence doesn't mean great fit. Let's evaluate overfitting wi
 pp_check(bm_u)
 ```
 
-There looks like some misspecification but at least we're
+There looks like some misspecification but not terrible (i.e., both symmetric distributions). Let's try a t-distribution instead.
 
-### Modify response (likelihood) to lognormal
+### Modify response (likelihood) to t-distribution
 
 Let's try instead a student t distribution
 
-```{r warning=FALSE,message=FALSE}
+```{r eval=FALSE,include=TRUE}
 bm2_u <- brms::brm(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"))
+
+save(bm2_u, file = "../models/fit_bm2_u.rda")
+```
+
+```{r}
+load("../models/fit_bm2_u.rda")
 ```
 
 ### What are model priors?
@@ -314,7 +389,8 @@ bm2_u$prior
 ### What are the coefficients?
 
 ```{r}
-coefplot(bm2_u)
+coef_bm2_u <- coefplot(bm2_u)
+coef_bm2_u
 ```
 
 
@@ -353,5 +429,63 @@ As a last step, let's do a posterior predictive check:
 pp_check(bm2_u) + xlim(-3,3)
 ```
 
+### Compare Coefficients
 
+As a final check, let's compare the coefficients for the normal Bayesian mixed effects model and the t-distribution Bayesian mixed effects model.
+
+```{r}
+coef_bm_u_df <- coef_bm_u$data
+coef_bm2_u_df <- coef_bm2_u$data
+coef_bm_u_df$Parameter[coef_bm_u_df$Parameter=="Intercept"] <- "(Intercept)"
+coef_bm2_u_df$Parameter[coef_bm2_u_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_u_df, coef_bm2_u_df, by = "Parameter")
+```
+
+
+```{r}
+joined_models %>%
+  rename(Normal_Estimate = Estimate.x, StudentT_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, StudentT_Estimate) %>%
+  mutate(Difference = round(Normal_Estimate - StudentT_Estimate,3)) %>%
+  knitr::kable()
+```
+
+We see the same for the coefficients standard errors:
+
+```{r}
+joined_models %>%
+  rename(Normal_Error = Est.Error.x, StudentT_Error = Est.Error.y) %>%
+  select(Parameter, Normal_Error, StudentT_Error) %>%
+  mutate(Diff_Error = round(Normal_Error - StudentT_Error,3)) %>%
+  knitr::kable()
+```
+
+```{r}
+un_coef <- joined_models %>%
+  rename(Normal_Estimate = Estimate.x, StudentT_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, StudentT_Estimate) 
+
+un_error <- joined_models %>%
+  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,StudentT_low = `2.5%ile.y`, StudentT_high = `97.5%ile.y`) %>%
+  select(Parameter, Normal_low, Normal_high, StudentT_low, StudentT_high) 
+
+var_order <- c("(Intercept)","visTreatmentCone","visTreatmentHOPs","preBeliefDistance","sampleUncertainty","visTreatmentCone:preBeliefDistance","visTreatmentHOPs:preBeliefDistance","visTreatmentCone:sampleUncertainty","visTreatmentHOPs:sampleUncertainty","preBeliefDistance:sampleUncertainty")
+
+inner_join(un_coef,un_error,by="Parameter") %>%
+  tidyr::pivot_longer(-Parameter) %>%
+  tidyr::separate(name, c("Model","Estimate"), sep = "_") %>%
+  tidyr::pivot_wider(names_from = c("Estimate")) %>%
+  mutate(Parameter = factor(Parameter, levels = rev(var_order))) %>%
+    mutate(Model = factor(Model, levels = c("Normal", "StudentT"))) %>%
+  ggplot(aes(x = Parameter, color = Model)) +
+  geom_hline(yintercept = 0, alpha = 0.4) +
+  geom_point(aes(y = Estimate),  position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin = low, ymax = high),  position=position_dodge(.9)) +
+  theme(legend.position = c(0.2,0.2),) +
+  labs(title = "Uncertainty Difference", subtitle = "Study 3: Vary by Response Distribution") +
+  scale_color_manual(values = c("StudentT" = "red",
+                                "Normal"="black")) + 
+  coord_flip()
+```
 

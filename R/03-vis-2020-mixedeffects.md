@@ -106,142 +106,25 @@ form as model `m`.
 library(brms)
 
 bm <- brms::brm(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+
+save(bm, file = "../models/fit_bm.rda")
 ```
 
-    ## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
-    ## clang -arch arm64 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/unsupported"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppParallel/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/arm64/include   -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:88:
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
-    ## namespace Eigen {
-    ## ^
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
-    ## namespace Eigen {
-    ##                ^
-    ##                ;
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
-    ## #include <complex>
-    ##          ^~~~~~~~~
-    ## 3 errors generated.
-    ## make: *** [foo.o] Error 1
-    ## 
-    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 1).
-    ## Chain 1: 
-    ## Chain 1: Gradient evaluation took 0.000255 seconds
-    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.55 seconds.
-    ## Chain 1: Adjust your expectations accordingly!
-    ## Chain 1: 
-    ## Chain 1: 
-    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 1: 
-    ## Chain 1:  Elapsed Time: 9.67148 seconds (Warm-up)
-    ## Chain 1:                5.15899 seconds (Sampling)
-    ## Chain 1:                14.8305 seconds (Total)
-    ## Chain 1: 
-    ## 
-    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 2).
-    ## Chain 2: 
-    ## Chain 2: Gradient evaluation took 0.000158 seconds
-    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.58 seconds.
-    ## Chain 2: Adjust your expectations accordingly!
-    ## Chain 2: 
-    ## Chain 2: 
-    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 2: 
-    ## Chain 2:  Elapsed Time: 9.63505 seconds (Warm-up)
-    ## Chain 2:                5.05123 seconds (Sampling)
-    ## Chain 2:                14.6863 seconds (Total)
-    ## Chain 2: 
-    ## 
-    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 3).
-    ## Chain 3: 
-    ## Chain 3: Gradient evaluation took 0.000157 seconds
-    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.57 seconds.
-    ## Chain 3: Adjust your expectations accordingly!
-    ## Chain 3: 
-    ## Chain 3: 
-    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 3: 
-    ## Chain 3:  Elapsed Time: 9.64559 seconds (Warm-up)
-    ## Chain 3:                4.96968 seconds (Sampling)
-    ## Chain 3:                14.6153 seconds (Total)
-    ## Chain 3: 
-    ## 
-    ## SAMPLING FOR MODEL '59195a97df8e8d442eb5755719ebddfc' NOW (CHAIN 4).
-    ## Chain 4: 
-    ## Chain 4: Gradient evaluation took 0.000172 seconds
-    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.72 seconds.
-    ## Chain 4: Adjust your expectations accordingly!
-    ## Chain 4: 
-    ## Chain 4: 
-    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 4: 
-    ## Chain 4:  Elapsed Time: 9.99218 seconds (Warm-up)
-    ## Chain 4:                5.06903 seconds (Sampling)
-    ## Chain 4:                15.0612 seconds (Total)
-    ## Chain 4:
+``` r
+load("../models/fit_bm.rda")
+```
 
 First let’s look at metadata around the model.
 
 ``` r
-coefplot(bm)
+coef_bm <- coefplot(bm)
+coef_bm
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 coef_m_df <- a$data %>% rename(Parameter = term) %>% mutate(Parameter = as.character(Parameter))
-
-coef_bm <- coefplot(bm)
 
 coef_bm_df <- coef_bm$data
 coef_bm_df$Parameter[coef_bm_df$Parameter=="Intercept"] <- "(Intercept)"
@@ -254,23 +137,23 @@ Notice that the coefficients are very similar to Frequentist:
 ``` r
 joined_models %>%
   rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
-  select(Bayesian_Estimate, Freq_Estimate) %>%
+  select(Parameter, Bayesian_Estimate, Freq_Estimate) %>%
   mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
   knitr::kable()
 ```
 
-| Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
-|-------------------:|---------------:|----------:|
-|          0.1382383 |      0.1340957 |     0.004 |
-|          0.7193759 |      0.7252758 |     0.006 |
-|         -0.0170234 |     -0.0210087 |     0.004 |
-|         -0.0250486 |     -0.0226014 |     0.002 |
-|         -0.0046405 |     -0.0034115 |     0.001 |
-|         -0.1171013 |     -0.1171506 |     0.000 |
-|          0.0248408 |      0.0244427 |     0.000 |
-|          0.0951004 |      0.0951972 |     0.000 |
-|         -0.1125716 |     -0.1128555 |     0.000 |
-|         -0.0702860 |     -0.0699720 |     0.000 |
+| Parameter                           | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|:------------------------------------|-------------------:|---------------:|----------:|
+| (Intercept)                         |          0.1370895 |      0.1340957 |     0.003 |
+| preBeliefDistance                   |          0.7203690 |      0.7252758 |     0.005 |
+| preBeliefDistance:sampleUncertainty |         -0.0173364 |     -0.0210087 |     0.004 |
+| sampleUncertainty                   |         -0.0249417 |     -0.0226014 |     0.002 |
+| visTreatmentCone                    |         -0.0030583 |     -0.0034115 |     0.000 |
+| visTreatmentCone:preBeliefDistance  |         -0.1175889 |     -0.1171506 |     0.000 |
+| visTreatmentCone:sampleUncertainty  |          0.0242470 |      0.0244427 |     0.000 |
+| visTreatmentHOPs                    |          0.0954937 |      0.0951972 |     0.000 |
+| visTreatmentHOPs:preBeliefDistance  |         -0.1135297 |     -0.1128555 |     0.001 |
+| visTreatmentHOPs:sampleUncertainty  |         -0.0702007 |     -0.0699720 |     0.000 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -278,34 +161,34 @@ slightly different things):
 ``` r
 joined_models %>%
   rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
-  select(Bayesian_Error, Freq_Error) %>%
+  select(Parameter, Bayesian_Error, Freq_Error) %>%
   mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
   knitr::kable()
 ```
 
-| Bayesian\_Error | Freq\_Error | abs\_diff\_error |
-|----------------:|------------:|-----------------:|
-|       0.0399810 |   0.0364427 |            0.004 |
-|       0.0506123 |   0.0420362 |            0.009 |
-|       0.0506271 |   0.0439540 |            0.007 |
-|       0.0387089 |   0.0364888 |            0.002 |
-|       0.0391010 |   0.0390879 |            0.000 |
-|       0.0357425 |   0.0354924 |            0.000 |
-|       0.0313559 |   0.0313056 |            0.000 |
-|       0.0395057 |   0.0396635 |            0.000 |
-|       0.0360918 |   0.0357082 |            0.000 |
-|       0.0316552 |   0.0320763 |            0.000 |
+| Parameter                           | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|:------------------------------------|----------------:|------------:|-----------------:|
+| (Intercept)                         |       0.0402823 |   0.0364427 |            0.004 |
+| preBeliefDistance                   |       0.0510357 |   0.0420362 |            0.009 |
+| preBeliefDistance:sampleUncertainty |       0.0504522 |   0.0439540 |            0.006 |
+| sampleUncertainty                   |       0.0385527 |   0.0364888 |            0.002 |
+| visTreatmentCone                    |       0.0391009 |   0.0390879 |            0.000 |
+| visTreatmentCone:preBeliefDistance  |       0.0352947 |   0.0354924 |            0.000 |
+| visTreatmentCone:sampleUncertainty  |       0.0309645 |   0.0313056 |            0.000 |
+| visTreatmentHOPs                    |       0.0399006 |   0.0396635 |            0.000 |
+| visTreatmentHOPs:preBeliefDistance  |       0.0358284 |   0.0357082 |            0.000 |
+| visTreatmentHOPs:sampleUncertainty  |       0.0317713 |   0.0320763 |            0.000 |
 
 ### Model convergence / posterior predictive check
 
 The convergence stats also look good - Rhat’s are at 1 and we have
-“fuzzy catepillars”.
+“fuzzy caterpillars”.
 
 ``` r
 plot(bm)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
 
 But remember - convergence doesn’t mean great fit. Let’s evaluate
 overfitting with Posterior Predictive Checks. We’ll do 10 draws and
@@ -315,13 +198,28 @@ compare to actual.
 pp_check(bm)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 There looks like some misspecification.
 
 ### Modify response (likelihood) to lognormal
 
-Let’s try instead a lognormal likelihood.
+Let’s try instead a lognormal likelihood (specifically the
+`hurdle_lognormal` because we have a handful of cases where
+diffBeliefAbs equals zero (see [brms
+comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2)))..
+
+``` r
+#df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
+
+bm2 <- brms::brm(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"))
+
+save(bm2, file = "../models/fit_bm2.rda")
+```
+
+``` r
+load("../models/fit_bm2.rda")
+```
 
 ### What are model priors?
 
@@ -340,6 +238,7 @@ bm2$prior
     ##                 (flat)         b                    visTreatmentHOPs          
     ##                 (flat)         b  visTreatmentHOPs:preBeliefDistance          
     ##                 (flat)         b  visTreatmentHOPs:sampleUncertainty          
+    ##             beta(1, 1)        hu                                              
     ##  student_t(3, -1, 2.5) Intercept                                              
     ##   student_t(3, 0, 2.5)        sd                                              
     ##   student_t(3, 0, 2.5)        sd                                     usertoken
@@ -360,6 +259,7 @@ bm2$prior
     ##                        (vectorized)
     ##                             default
     ##                             default
+    ##                             default
     ##                        (vectorized)
     ##                        (vectorized)
     ##                        (vectorized)
@@ -369,10 +269,11 @@ bm2$prior
 ### What are the coefficients?
 
 ``` r
-coefplot(bm2)
+coef_bm2 <- coefplot(bm2)
+coef_bm2
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ### Model Comparison
 
@@ -388,13 +289,20 @@ print(looNormal)
     ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1826.5  76.4
-    ## p_loo       218.8   7.7
-    ## looic      3652.9 152.7
+    ## elpd_loo  -1825.9  76.4
+    ## p_loo       218.3   7.7
+    ## looic      3651.9 152.7
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## All Pareto k estimates are good (k < 0.5).
+    ## Pareto k diagnostic values:
+    ##                          Count Pct.    Min. n_eff
+    ## (-Inf, 0.5]   (good)     4259  100.0%  614       
+    ##  (0.5, 0.7]   (ok)          1    0.0%  2762      
+    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
+    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
+    ## 
+    ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
 
 ``` r
@@ -406,13 +314,20 @@ print(looNormal)
     ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1826.5  76.4
-    ## p_loo       218.8   7.7
-    ## looic      3652.9 152.7
+    ## elpd_loo  -1825.9  76.4
+    ## p_loo       218.3   7.7
+    ## looic      3651.9 152.7
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## All Pareto k estimates are good (k < 0.5).
+    ## Pareto k diagnostic values:
+    ##                          Count Pct.    Min. n_eff
+    ## (-Inf, 0.5]   (good)     4259  100.0%  614       
+    ##  (0.5, 0.7]   (ok)          1    0.0%  2762      
+    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
+    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
+    ## 
+    ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
 
 ``` r
@@ -424,18 +339,18 @@ print(looLog)
     ## Computed from 4000 by 4260 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1466.4  81.1
-    ## p_loo       203.8   7.1
-    ## looic      2932.9 162.2
+    ## elpd_loo  -2174.5  87.2
+    ## p_loo       219.2   9.3
+    ## looic      4349.0 174.4
     ## ------
-    ## Monte Carlo SE of elpd_loo is 0.2.
+    ## Monte Carlo SE of elpd_loo is 0.3.
     ## 
     ## Pareto k diagnostic values:
     ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     4259  100.0%  580       
-    ##  (0.5, 0.7]   (ok)          1    0.0%  1730      
-    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
-    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
+    ## (-Inf, 0.5]   (good)     4255  99.9%   298       
+    ##  (0.5, 0.7]   (ok)          5   0.1%   143       
+    ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
+    ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
     ## 
     ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
@@ -449,8 +364,8 @@ loo_compare(looNormal, looLog)
 ```
 
     ##     elpd_diff se_diff
-    ## bm2    0.0       0.0 
-    ## bm  -360.0      78.4
+    ## bm     0.0       0.0 
+    ## bm2 -348.6      84.2
 
 WAIC criterion
 
@@ -461,8 +376,8 @@ loo_compare(waicNormal, waicLog)
 ```
 
     ##     elpd_diff se_diff
-    ## bm2    0.0       0.0 
-    ## bm  -359.8      78.4
+    ## bm     0.0       0.0 
+    ## bm2 -348.7      84.2
 
 As a last step, let’s do a posterior predictive check:
 
@@ -470,14 +385,82 @@ As a last step, let’s do a posterior predictive check:
 pp_check(bm2) + xlim(-1,3)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 Better – but we’re still overfitting. It appears to be bimodal, maybe
-even “tri”-modal.
+even “tri”-modal. We suspect this is due to the IV’s, namely Belief
+Distance’s bimodal features.
 
-This may be a solution to do a Bayesian mixture for lognormal. [Chapter
-20 of “An Introduction to Bayesian Data Analysis for Cognitive
-Science”](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-speed-accuracy-trade-off-the-fast-guess-model-account.html)
+### Compare Coefficients
+
+As a final check, let’s compare the coefficients for the normal Bayesian
+mixed effects model and the (hurdle) Lognormal Bayesian mixed effects
+model.
+
+``` r
+coef_bm_df <- coef_bm$data
+coef_bm2_df <- coef_bm2$data
+coef_bm_df$Parameter[coef_bm_df$Parameter=="Intercept"] <- "(Intercept)"
+coef_bm2_df$Parameter[coef_bm2_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_df, coef_bm2_df, by = "Parameter")
+```
+
+Let’s examine the coefficient differences with the different
+likelihoods.
+
+``` r
+un_coef <- joined_models %>%
+  rename(Normal_Estimate = Estimate.x, Lognormal_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, Lognormal_Estimate) 
+
+un_error <- joined_models %>%
+  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,Lognormal_low = `2.5%ile.y`, Lognormal_high = `97.5%ile.y`) %>%
+  select(Parameter, Normal_low, Normal_high, Lognormal_low, Lognormal_high) 
+
+var_order <- c("(Intercept)","visTreatmentCone","visTreatmentHOPs","preBeliefDistance","sampleUncertainty","visTreatmentCone:preBeliefDistance","visTreatmentHOPs:preBeliefDistance","visTreatmentCone:sampleUncertainty","visTreatmentHOPs:sampleUncertainty","preBeliefDistance:sampleUncertainty")
+
+inner_join(un_coef,un_error,by="Parameter") %>%
+  tidyr::pivot_longer(-Parameter) %>%
+  tidyr::separate(name, c("Model","Estimate"), sep = "_") %>%
+  tidyr::pivot_wider(names_from = c("Estimate")) %>%
+  mutate(Parameter = factor(Parameter, levels = rev(var_order))) %>%
+  mutate(Model = factor(Model, levels = c("Normal", "Lognormal"))) %>%
+  ggplot(aes(x = Parameter, color = Model)) +
+  geom_hline(yintercept = 0, alpha = 0.4) +
+  geom_point(aes(y = Estimate),  position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin = low, ymax = high),  position=position_dodge(.9)) +
+  theme(legend.position = c(0.2,0.2),) +
+  labs(title = "Abs Belief Difference", subtitle = "Study 3: Vary by Response Distribution") +
+  scale_color_manual(values = c("Lognormal" = "red",
+                                "Normal"="black")) +  
+  coord_flip()
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+We see the same for the coefficients standard errors:
+
+``` r
+joined_models %>%
+  rename(Normal_Error = Est.Error.x, Lognormal_Error = Est.Error.y) %>%
+  select(Parameter, Normal_Error, Lognormal_Error) %>%
+  mutate(Diff_Error = round(Normal_Error - Lognormal_Error,3)) %>%
+  knitr::kable()
+```
+
+| Parameter                           | Normal\_Error | Lognormal\_Error | Diff\_Error |
+|:------------------------------------|--------------:|-----------------:|------------:|
+| (Intercept)                         |     0.0402823 |        0.1244492 |      -0.084 |
+| preBeliefDistance                   |     0.0510357 |        0.1496734 |      -0.099 |
+| preBeliefDistance:sampleUncertainty |     0.0504522 |        0.1435629 |      -0.093 |
+| sampleUncertainty                   |     0.0385527 |        0.1156618 |      -0.077 |
+| visTreatmentCone                    |     0.0391009 |        0.1124205 |      -0.073 |
+| visTreatmentCone:preBeliefDistance  |     0.0352947 |        0.1046472 |      -0.069 |
+| visTreatmentCone:sampleUncertainty  |     0.0309645 |        0.0909648 |      -0.060 |
+| visTreatmentHOPs                    |     0.0399006 |        0.1183132 |      -0.078 |
+| visTreatmentHOPs:preBeliefDistance  |     0.0358284 |        0.1048520 |      -0.069 |
+| visTreatmentHOPs:sampleUncertainty  |     0.0317713 |        0.0945104 |      -0.063 |
 
 ## 5b. Uncertainty Difference
 
@@ -488,141 +471,22 @@ the same functional form as model `m`.
 
 ``` r
 bm_u <- brms::brm(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
+
+save(bm_u, file = "../models/fit_bm_u.rda")
 ```
 
-    ## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
-    ## clang -arch arm64 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/unsupported"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/RcppParallel/include/"  -I"/Users/rhymenoceros/Desktop/correlation-belief-vaccine/renv/library/R-4.1/aarch64-apple-darwin20/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/arm64/include   -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:88:
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
-    ## namespace Eigen {
-    ## ^
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
-    ## namespace Eigen {
-    ##                ^
-    ##                ;
-    ## In file included from <built-in>:1:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:13:
-    ## In file included from /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
-    ## /Library/Frameworks/R.framework/Versions/4.1-arm64/Resources/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
-    ## #include <complex>
-    ##          ^~~~~~~~~
-    ## 3 errors generated.
-    ## make: *** [foo.o] Error 1
-    ## 
-    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 1).
-    ## Chain 1: 
-    ## Chain 1: Gradient evaluation took 0.000289 seconds
-    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.89 seconds.
-    ## Chain 1: Adjust your expectations accordingly!
-    ## Chain 1: 
-    ## Chain 1: 
-    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 1: 
-    ## Chain 1:  Elapsed Time: 11.1987 seconds (Warm-up)
-    ## Chain 1:                5.19646 seconds (Sampling)
-    ## Chain 1:                16.3951 seconds (Total)
-    ## Chain 1: 
-    ## 
-    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 2).
-    ## Chain 2: 
-    ## Chain 2: Gradient evaluation took 0.00016 seconds
-    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.6 seconds.
-    ## Chain 2: Adjust your expectations accordingly!
-    ## Chain 2: 
-    ## Chain 2: 
-    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 2: 
-    ## Chain 2:  Elapsed Time: 11.2981 seconds (Warm-up)
-    ## Chain 2:                5.2345 seconds (Sampling)
-    ## Chain 2:                16.5326 seconds (Total)
-    ## Chain 2: 
-    ## 
-    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 3).
-    ## Chain 3: 
-    ## Chain 3: Gradient evaluation took 0.000162 seconds
-    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.62 seconds.
-    ## Chain 3: Adjust your expectations accordingly!
-    ## Chain 3: 
-    ## Chain 3: 
-    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 3: 
-    ## Chain 3:  Elapsed Time: 11.2082 seconds (Warm-up)
-    ## Chain 3:                5.21268 seconds (Sampling)
-    ## Chain 3:                16.4209 seconds (Total)
-    ## Chain 3: 
-    ## 
-    ## SAMPLING FOR MODEL '60d941588c6f3464bfcb0ac83aa444df' NOW (CHAIN 4).
-    ## Chain 4: 
-    ## Chain 4: Gradient evaluation took 0.000156 seconds
-    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.56 seconds.
-    ## Chain 4: Adjust your expectations accordingly!
-    ## Chain 4: 
-    ## Chain 4: 
-    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 4: 
-    ## Chain 4:  Elapsed Time: 11.5681 seconds (Warm-up)
-    ## Chain 4:                5.19867 seconds (Sampling)
-    ## Chain 4:                16.7668 seconds (Total)
-    ## Chain 4:
-
 ``` r
-#save(bm_u, file = "../models/bm_u.rda")
+load("../models/fit_bm_u.rda")
 ```
 
 First let’s look at metadata around the model.
 
 ``` r
-coefplot(bm_u)
+coef_bm_u <- coefplot(bm_u)
+coef_bm_u
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 ``` r
 coef_mu_df <- b$data %>% rename(Parameter = term) %>% mutate(Parameter = as.character(Parameter))
@@ -640,23 +504,23 @@ Notice that the coefficients are very similar to Frequentist:
 ``` r
 joined_models %>%
   rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
-  select(Bayesian_Estimate, Freq_Estimate) %>%
+  select(Parameter, Bayesian_Estimate, Freq_Estimate) %>%
   mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
   knitr::kable()
 ```
 
-| Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
-|-------------------:|---------------:|----------:|
-|         -0.0891671 |     -0.0875698 |     0.002 |
-|          0.0131538 |      0.0120174 |     0.001 |
-|          0.1018924 |      0.1013096 |     0.001 |
-|          0.1293593 |      0.1285109 |     0.001 |
-|         -0.1862188 |     -0.1863117 |     0.000 |
-|          0.0672140 |      0.0676643 |     0.000 |
-|          0.2009528 |      0.2007491 |     0.000 |
-|         -0.0679236 |     -0.0686954 |     0.001 |
-|          0.0043500 |      0.0055774 |     0.001 |
-|          0.1301434 |      0.1298018 |     0.000 |
+| Parameter                           | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|:------------------------------------|-------------------:|---------------:|----------:|
+| (Intercept)                         |         -0.0897642 |     -0.0875698 |     0.002 |
+| preBeliefDistance                   |          0.0136771 |      0.0120174 |     0.002 |
+| preBeliefDistance:sampleUncertainty |          0.1002567 |      0.1013096 |     0.001 |
+| sampleUncertainty                   |          0.1306587 |      0.1285109 |     0.002 |
+| visTreatmentCone                    |         -0.1860391 |     -0.1863117 |     0.000 |
+| visTreatmentCone:preBeliefDistance  |          0.0671158 |      0.0676643 |     0.001 |
+| visTreatmentCone:sampleUncertainty  |          0.2011720 |      0.2007491 |     0.000 |
+| visTreatmentHOPs                    |         -0.0687158 |     -0.0686954 |     0.000 |
+| visTreatmentHOPs:preBeliefDistance  |          0.0055863 |      0.0055774 |     0.000 |
+| visTreatmentHOPs:sampleUncertainty  |          0.1297304 |      0.1298018 |     0.000 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -664,34 +528,34 @@ slightly different things):
 ``` r
 joined_models %>%
   rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
-  select(Bayesian_Error, Freq_Error) %>%
+  select(Parameter, Bayesian_Error, Freq_Error) %>%
   mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
   knitr::kable()
 ```
 
-| Bayesian\_Error | Freq\_Error | abs\_diff\_error |
-|----------------:|------------:|-----------------:|
-|       0.0578988 |   0.0564353 |            0.001 |
-|       0.0689174 |   0.0673025 |            0.002 |
-|       0.0673181 |   0.0650201 |            0.002 |
-|       0.0549677 |   0.0537443 |            0.001 |
-|       0.0445922 |   0.0447271 |            0.000 |
-|       0.0475922 |   0.0475906 |            0.000 |
-|       0.0430368 |   0.0419628 |            0.001 |
-|       0.0459529 |   0.0453695 |            0.001 |
-|       0.0484136 |   0.0479265 |            0.000 |
-|       0.0445491 |   0.0430000 |            0.002 |
+| Parameter                           | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|:------------------------------------|----------------:|------------:|-----------------:|
+| (Intercept)                         |       0.0581389 |   0.0564353 |            0.002 |
+| preBeliefDistance                   |       0.0668178 |   0.0673025 |            0.000 |
+| preBeliefDistance:sampleUncertainty |       0.0640437 |   0.0650201 |            0.001 |
+| sampleUncertainty                   |       0.0548151 |   0.0537443 |            0.001 |
+| visTreatmentCone                    |       0.0445588 |   0.0447271 |            0.000 |
+| visTreatmentCone:preBeliefDistance  |       0.0474350 |   0.0475906 |            0.000 |
+| visTreatmentCone:sampleUncertainty  |       0.0420932 |   0.0419628 |            0.000 |
+| visTreatmentHOPs                    |       0.0450824 |   0.0453695 |            0.000 |
+| visTreatmentHOPs:preBeliefDistance  |       0.0481859 |   0.0479265 |            0.000 |
+| visTreatmentHOPs:sampleUncertainty  |       0.0427990 |   0.0430000 |            0.000 |
 
 ### Model convergence / posterior predictive check
 
 The convergence stats also look good - Rhat’s are at 1 and we have
-“fuzzy catepillars”.
+“fuzzy caterpillars”.
 
 ``` r
 plot(bm_u)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-3.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-30-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-30-3.png)<!-- -->
 
 But remember - convergence doesn’t mean great fit. Let’s evaluate
 overfitting with Posterior Predictive Checks. We’ll do 10 draws and
@@ -701,13 +565,24 @@ compare to actual.
 pp_check(bm_u)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
-There looks like some misspecification but at least we’re
+There looks like some misspecification but not terrible (i.e., both
+symmetric distributions). Let’s try a t-distribution instead.
 
-### Modify response (likelihood) to lognormal
+### Modify response (likelihood) to t-distribution
 
 Let’s try instead a student t distribution
+
+``` r
+bm2_u <- brms::brm(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"))
+
+save(bm2_u, file = "../models/fit_bm2_u.rda")
+```
+
+``` r
+load("../models/fit_bm2_u.rda")
+```
 
 ### What are model priors?
 
@@ -757,10 +632,11 @@ bm2_u$prior
 ### What are the coefficients?
 
 ``` r
-coefplot(bm2_u)
+coef_bm2_u <- coefplot(bm2_u)
+coef_bm2_u
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 ### Model Comparison
 
@@ -776,9 +652,9 @@ print(looNormal_u)
     ## Computed from 4000 by 4267 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -3052.0  68.4
-    ## p_loo       133.6   4.3
-    ## looic      6104.1 136.9
+    ## elpd_loo  -3051.5  68.4
+    ## p_loo       133.3   4.3
+    ## looic      6103.1 136.9
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -794,9 +670,9 @@ print(looT)
     ## Computed from 4000 by 4267 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -2690.7  72.1
-    ## p_loo       153.3   1.7
-    ## looic      5381.4 144.3
+    ## elpd_loo  -2690.4  72.1
+    ## p_loo       153.9   1.8
+    ## looic      5380.9 144.2
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -813,7 +689,7 @@ loo_compare(looNormal_u, looT)
 
     ##       elpd_diff se_diff
     ## bm2_u    0.0       0.0 
-    ## bm_u  -361.4      31.0
+    ## bm_u  -361.1      31.0
 
 WAIC criterion
 
@@ -825,7 +701,7 @@ loo_compare(waicNormal_u, waicT)
 
     ##       elpd_diff se_diff
     ## bm2_u    0.0       0.0 
-    ## bm_u  -361.3      31.0
+    ## bm_u  -361.0      31.0
 
 As a last step, let’s do a posterior predictive check:
 
@@ -833,4 +709,92 @@ As a last step, let’s do a posterior predictive check:
 pp_check(bm2_u) + xlim(-3,3)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+### Compare Coefficients
+
+As a final check, let’s compare the coefficients for the normal Bayesian
+mixed effects model and the t-distribution Bayesian mixed effects model.
+
+``` r
+coef_bm_u_df <- coef_bm_u$data
+coef_bm2_u_df <- coef_bm2_u$data
+coef_bm_u_df$Parameter[coef_bm_u_df$Parameter=="Intercept"] <- "(Intercept)"
+coef_bm2_u_df$Parameter[coef_bm2_u_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_u_df, coef_bm2_u_df, by = "Parameter")
+```
+
+``` r
+joined_models %>%
+  rename(Normal_Estimate = Estimate.x, StudentT_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, StudentT_Estimate) %>%
+  mutate(Difference = round(Normal_Estimate - StudentT_Estimate,3)) %>%
+  knitr::kable()
+```
+
+| Parameter                           | Normal\_Estimate | StudentT\_Estimate | Difference |
+|:------------------------------------|-----------------:|-------------------:|-----------:|
+| (Intercept)                         |       -0.0897642 |         -0.0200240 |     -0.070 |
+| preBeliefDistance                   |        0.0136771 |         -0.0042911 |      0.018 |
+| preBeliefDistance:sampleUncertainty |        0.1002567 |          0.0825076 |      0.018 |
+| sampleUncertainty                   |        0.1306587 |          0.0422592 |      0.088 |
+| visTreatmentCone                    |       -0.1860391 |         -0.1466749 |     -0.039 |
+| visTreatmentCone:preBeliefDistance  |        0.0671158 |          0.0411721 |      0.026 |
+| visTreatmentCone:sampleUncertainty  |        0.2011720 |          0.1882463 |      0.013 |
+| visTreatmentHOPs                    |       -0.0687158 |         -0.0407700 |     -0.028 |
+| visTreatmentHOPs:preBeliefDistance  |        0.0055863 |         -0.0090162 |      0.015 |
+| visTreatmentHOPs:sampleUncertainty  |        0.1297304 |          0.0978760 |      0.032 |
+
+We see the same for the coefficients standard errors:
+
+``` r
+joined_models %>%
+  rename(Normal_Error = Est.Error.x, StudentT_Error = Est.Error.y) %>%
+  select(Parameter, Normal_Error, StudentT_Error) %>%
+  mutate(Diff_Error = round(Normal_Error - StudentT_Error,3)) %>%
+  knitr::kable()
+```
+
+| Parameter                           | Normal\_Error | StudentT\_Error | Diff\_Error |
+|:------------------------------------|--------------:|----------------:|------------:|
+| (Intercept)                         |     0.0581389 |       0.0394573 |       0.019 |
+| preBeliefDistance                   |     0.0668178 |       0.0482088 |       0.019 |
+| preBeliefDistance:sampleUncertainty |     0.0640437 |       0.0474667 |       0.017 |
+| sampleUncertainty                   |     0.0548151 |       0.0398163 |       0.015 |
+| visTreatmentCone                    |     0.0445588 |       0.0327885 |       0.012 |
+| visTreatmentCone:preBeliefDistance  |     0.0474350 |       0.0339575 |       0.013 |
+| visTreatmentCone:sampleUncertainty  |     0.0420932 |       0.0329402 |       0.009 |
+| visTreatmentHOPs                    |     0.0450824 |       0.0334555 |       0.012 |
+| visTreatmentHOPs:preBeliefDistance  |     0.0481859 |       0.0348774 |       0.013 |
+| visTreatmentHOPs:sampleUncertainty  |     0.0427990 |       0.0339606 |       0.009 |
+
+``` r
+un_coef <- joined_models %>%
+  rename(Normal_Estimate = Estimate.x, StudentT_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, StudentT_Estimate) 
+
+un_error <- joined_models %>%
+  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,StudentT_low = `2.5%ile.y`, StudentT_high = `97.5%ile.y`) %>%
+  select(Parameter, Normal_low, Normal_high, StudentT_low, StudentT_high) 
+
+var_order <- c("(Intercept)","visTreatmentCone","visTreatmentHOPs","preBeliefDistance","sampleUncertainty","visTreatmentCone:preBeliefDistance","visTreatmentHOPs:preBeliefDistance","visTreatmentCone:sampleUncertainty","visTreatmentHOPs:sampleUncertainty","preBeliefDistance:sampleUncertainty")
+
+inner_join(un_coef,un_error,by="Parameter") %>%
+  tidyr::pivot_longer(-Parameter) %>%
+  tidyr::separate(name, c("Model","Estimate"), sep = "_") %>%
+  tidyr::pivot_wider(names_from = c("Estimate")) %>%
+  mutate(Parameter = factor(Parameter, levels = rev(var_order))) %>%
+    mutate(Model = factor(Model, levels = c("Normal", "StudentT"))) %>%
+  ggplot(aes(x = Parameter, color = Model)) +
+  geom_hline(yintercept = 0, alpha = 0.4) +
+  geom_point(aes(y = Estimate),  position=position_dodge(.9)) +
+  geom_errorbar(aes(ymin = low, ymax = high),  position=position_dodge(.9)) +
+  theme(legend.position = c(0.2,0.2),) +
+  labs(title = "Uncertainty Difference", subtitle = "Study 3: Vary by Response Distribution") +
+  scale_color_manual(values = c("StudentT" = "red",
+                                "Normal"="black")) + 
+  coord_flip()
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
