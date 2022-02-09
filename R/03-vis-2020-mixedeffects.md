@@ -8,6 +8,8 @@ library(ggplot2)
 library(statsr)
 library(lme4)
 library(sjPlot)
+library(dplyr)
+library(brmstools)
 theme_set(theme_sjplot())
 ```
 
@@ -18,55 +20,81 @@ df <- read.csv(file="../data/vis2020/data_exclude_mturk2020-04-26.csv")
 
 # refactor and categorize
 df$visGroup <- factor(df$visGroup, c("line","band","hop"))
+levels(df$visGroup ) <- c("Line","Cone","HOPs")
 df$nDataShown <- factor(df$nDataShown)
+
+df <- rename(df, 
+             sampleUncertainty = uncertaintyShown,
+             visTreatment = visGroup)
+
+df <- within(df, visTreatment <- relevel(visTreatment, ref = 1))
 ```
 
 ## 3. Exploratory Graphs
 
 ``` r
-ggplot(df,aes(x=uncertaintyShown,fill=nDataShown)) + 
-  geom_density(alpha=0.5)
+g1 <- df %>%
+  rename(Congruency = congruency) %>%
+  ggplot(aes(x=preBeliefDistance,fill=Congruency)) + 
+  geom_density(alpha=0.5) +
+  annotate("text", x = 1.4, y = 2.8, label = "Incongruent", size = 2.5) +
+  annotate("text", x = 0.75, y = 3.7, label = "Congruent", size = 2.5) +
+  theme(legend.position = "none") + 
+  labs(x = " ", y = " ", subtitle = "Pre-Belief Distance") 
+
+g2 <- df %>%
+  ggplot(aes(x=sampleUncertainty,fill=nDataShown)) + 
+  geom_density(alpha=0.5) +
+  annotate("text", x = 1.3, y = 2, label = "Data Shown\n(n = 10)", size = 2.5) +
+  annotate("text", x = 0.75, y = 3.7, label = "Data Shown\n(n = 100)", size = 2.5) +
+  theme(legend.position = "none") +
+  labs(x = " ", y = " ", subtitle = "Sample Uncertainty")
+
+cowplot::plot_grid(g1, g2,
+                   label_x = -0.2,
+                   ncol = 2)
 ```
 
 ![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
+## 4. Frequentist Mixed Effects Modeling (`lme4`)
+
 ``` r
-ggplot(df,aes(x=preBeliefDistance,fill=congruency)) + 
-  geom_density(alpha=0.5)
+# Absolute Belief Distance
+m = lmer(diffBeliefAbs ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance  +  (1|usertoken) + (1|vars),df)
+# Uncertainty Difference
+m1 = lmer(diffUncertainty ~ visTreatment * preBeliefDistance + visTreatment * sampleUncertainty +  sampleUncertainty * preBeliefDistance  + (1|usertoken) + (1|vars),df)
+```
+
+``` r
+a <- plot_model(m,show.values = TRUE, vline.color = "grey", value.offset = .4, value.size = 3, type="est", show.intercept = TRUE ) +
+  scale_y_continuous(breaks=seq(-.75,0.75,.25)) +
+  theme(axis.text.y = element_text(size = 8),
+        plot.subtitle=element_text(size=11), plot.title = element_text(size = 1)) +
+  labs(subtitle = "Absolute Belief Difference", title = "") +
+  ylim(-0.25, 0.9)
+
+b <- plot_model(m1, vline.color = "grey",show.values = TRUE, value.offset = .4, value.size = 3, show.intercept = TRUE) +
+  ylim(-.3,.3) +
+  theme(axis.text.y=element_blank(),
+        plot.subtitle=element_text(size=11), plot.title = element_text(size = 1)) +
+  labs(subtitle = "Uncertainty Difference", title = "")
+
+# final plots
+library(cowplot)
+
+plot_grid(a,
+  b,
+  label_x = -0.2,
+  ncol = 2,
+  rel_widths = c(4.6, 2.4)) 
 ```
 
 ![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
-## 4. Mixed Effects Modeling (`lme4`)
+## 5a. Absolute Belief Difference
 
-``` r
-# Absolute Belief Distance
-m = lmer(diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  +  (1|usertoken) + (1|vars),df)
-# Uncertainty Difference
-m1 = lmer(diffUncertainty ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  + (1|usertoken) + (1|vars),df)
-# Post Belief Distance 
-m3 = lmer(postBeliefDistance ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance  +  (1|usertoken) + (1|vars),df)
-```
-
-``` r
-plot_model(m,show.values = TRUE, value.offset = .3,type="est" ) + ylim(-0.25,0.85)
-```
-
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-``` r
-plot_model(m1, vline.color = "red", show.values = TRUE, value.offset = .3 ) + ylim(-.3,.3)
-```
-
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-``` r
-plot_model(m3, vline.color = "red", show.values = TRUE, value.offset = .3 ) + ylim(-.2,.2)
-```
-
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-## 5. Bayesian Mixed Effects
+### Bayesian Mixed Effects
 
 For the Vis 2020 paper, we did not run a Bayesian mixed effects model.
 
@@ -74,196 +102,73 @@ Let’s examine the first regression to estimate the effect on the
 absolute belief change (`diffBeliefAbs`). We’ll use the same functional
 form as model `m`.
 
-``` r
-library(brms)
-
-bm <- brms::brm(diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance + (1|usertoken) + (1|vars), data = df)
-```
-
-    ## 
-    ## SAMPLING FOR MODEL '74d1063d2eecb58e969b7ab83e7fcd65' NOW (CHAIN 1).
-    ## Chain 1: 
-    ## Chain 1: Gradient evaluation took 0.000216 seconds
-    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.16 seconds.
-    ## Chain 1: Adjust your expectations accordingly!
-    ## Chain 1: 
-    ## Chain 1: 
-    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 1: 
-    ## Chain 1:  Elapsed Time: 9.39054 seconds (Warm-up)
-    ## Chain 1:                4.83726 seconds (Sampling)
-    ## Chain 1:                14.2278 seconds (Total)
-    ## Chain 1: 
-    ## 
-    ## SAMPLING FOR MODEL '74d1063d2eecb58e969b7ab83e7fcd65' NOW (CHAIN 2).
-    ## Chain 2: 
-    ## Chain 2: Gradient evaluation took 0.000157 seconds
-    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.57 seconds.
-    ## Chain 2: Adjust your expectations accordingly!
-    ## Chain 2: 
-    ## Chain 2: 
-    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 2: 
-    ## Chain 2:  Elapsed Time: 10.2163 seconds (Warm-up)
-    ## Chain 2:                4.85112 seconds (Sampling)
-    ## Chain 2:                15.0674 seconds (Total)
-    ## Chain 2: 
-    ## 
-    ## SAMPLING FOR MODEL '74d1063d2eecb58e969b7ab83e7fcd65' NOW (CHAIN 3).
-    ## Chain 3: 
-    ## Chain 3: Gradient evaluation took 0.000162 seconds
-    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.62 seconds.
-    ## Chain 3: Adjust your expectations accordingly!
-    ## Chain 3: 
-    ## Chain 3: 
-    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 3: 
-    ## Chain 3:  Elapsed Time: 9.96601 seconds (Warm-up)
-    ## Chain 3:                4.98748 seconds (Sampling)
-    ## Chain 3:                14.9535 seconds (Total)
-    ## Chain 3: 
-    ## 
-    ## SAMPLING FOR MODEL '74d1063d2eecb58e969b7ab83e7fcd65' NOW (CHAIN 4).
-    ## Chain 4: 
-    ## Chain 4: Gradient evaluation took 0.000157 seconds
-    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 1.57 seconds.
-    ## Chain 4: Adjust your expectations accordingly!
-    ## Chain 4: 
-    ## Chain 4: 
-    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 4: 
-    ## Chain 4:  Elapsed Time: 9.58953 seconds (Warm-up)
-    ## Chain 4:                4.99442 seconds (Sampling)
-    ## Chain 4:                14.5839 seconds (Total)
-    ## Chain 4:
-
 First let’s look at metadata around the model.
 
 ``` r
-bm
+coefplot(bm)
 ```
 
-    ##  Family: gaussian 
-    ##   Links: mu = identity; sigma = identity 
-    ## Formula: diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown + uncertaintyShown * preBeliefDistance + (1 | usertoken) + (1 | vars) 
-    ##    Data: df (Number of observations: 4228) 
-    ##   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-    ##          total post-warmup draws = 4000
-    ## 
-    ## Group-Level Effects: 
-    ## ~usertoken (Number of levels: 265) 
-    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)     0.16      0.01     0.14     0.18 1.00     1669     2507
-    ## 
-    ## ~vars (Number of levels: 16) 
-    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)     0.04      0.01     0.02     0.07 1.00     1216     1966
-    ## 
-    ## Population-Level Effects: 
-    ##                                    Estimate Est.Error l-95% CI u-95% CI Rhat
-    ## Intercept                              0.14      0.04     0.06     0.22 1.00
-    ## visGroupband                          -0.00      0.04    -0.08     0.07 1.00
-    ## visGrouphop                            0.10      0.04     0.02     0.17 1.00
-    ## preBeliefDistance                      0.72      0.05     0.62     0.81 1.00
-    ## uncertaintyShown                      -0.03      0.04    -0.11     0.05 1.00
-    ## visGroupband:preBeliefDistance        -0.12      0.04    -0.19    -0.04 1.00
-    ## visGrouphop:preBeliefDistance         -0.11      0.04    -0.18    -0.04 1.00
-    ## visGroupband:uncertaintyShown          0.02      0.03    -0.04     0.09 1.00
-    ## visGrouphop:uncertaintyShown          -0.07      0.03    -0.14    -0.01 1.00
-    ## preBeliefDistance:uncertaintyShown    -0.01      0.05    -0.11     0.09 1.00
-    ##                                    Bulk_ESS Tail_ESS
-    ## Intercept                              1979     2893
-    ## visGroupband                           2753     3137
-    ## visGrouphop                            2721     3044
-    ## preBeliefDistance                      2053     2477
-    ## uncertaintyShown                       2863     2745
-    ## visGroupband:preBeliefDistance         5943     2931
-    ## visGrouphop:preBeliefDistance          5297     3077
-    ## visGroupband:uncertaintyShown          5372     3268
-    ## visGrouphop:uncertaintyShown           6001     3180
-    ## preBeliefDistance:uncertaintyShown     2490     3093
-    ## 
-    ## Family Specific Parameters: 
-    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sigma     0.36      0.00     0.35     0.37 1.00     8644     2961
-    ## 
-    ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
-    ## scale reduction factor on split chains (at convergence, Rhat = 1).
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+coef_m_df <- a$data %>% rename(Parameter = term) %>% mutate(Parameter = as.character(Parameter))
+
+coef_bm <- coefplot(bm)
+
+coef_bm_df <- coef_bm$data
+coef_bm_df$Parameter[coef_bm_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_df, coef_m_df, by = "Parameter")
+```
 
 Notice that the coefficients are very similar to Frequentist:
 
 ``` r
-m
+joined_models %>%
+  rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
+  select(Bayesian_Estimate, Freq_Estimate) %>%
+  mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
+  knitr::kable()
 ```
 
-    ## Linear mixed model fit by REML ['lmerMod']
-    ## Formula: 
-    ## diffBeliefAbs ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  
-    ##     uncertaintyShown * preBeliefDistance + (1 | usertoken) +      (1 | vars)
-    ##    Data: df
-    ## REML criterion at convergence: 3844.758
-    ## Random effects:
-    ##  Groups    Name        Std.Dev.
-    ##  usertoken (Intercept) 0.15714 
-    ##  vars      (Intercept) 0.03268 
-    ##  Residual              0.36238 
-    ## Number of obs: 4228, groups:  usertoken, 265; vars, 16
-    ## Fixed Effects:
-    ##                        (Intercept)                        visGroupband  
-    ##                           0.135840                           -0.003965  
-    ##                        visGrouphop                   preBeliefDistance  
-    ##                           0.097762                            0.723143  
-    ##                   uncertaintyShown      visGroupband:preBeliefDistance  
-    ##                          -0.024993                           -0.116221  
-    ##      visGrouphop:preBeliefDistance       visGroupband:uncertaintyShown  
-    ##                          -0.112259                            0.024742  
-    ##       visGrouphop:uncertaintyShown  preBeliefDistance:uncertaintyShown  
-    ##                          -0.074495                           -0.018877
+| Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|-------------------:|---------------:|----------:|
+|          0.1388010 |      0.1358401 |     0.003 |
+|          0.7178997 |      0.7231434 |     0.005 |
+|         -0.0156738 |     -0.0188768 |     0.003 |
+|         -0.0260823 |     -0.0249925 |     0.001 |
+|         -0.0035645 |     -0.0039647 |     0.000 |
+|         -0.1170579 |     -0.1162205 |     0.001 |
+|          0.0243800 |      0.0247423 |     0.000 |
+|          0.0978748 |      0.0977617 |     0.000 |
+|         -0.1126694 |     -0.1122588 |     0.000 |
+|         -0.0748911 |     -0.0744954 |     0.000 |
+
+We see the same for the coefficients standard errors (though they mean
+slightly different things):
+
+``` r
+joined_models %>%
+  rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
+  select(Bayesian_Error, Freq_Error) %>%
+  mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
+  knitr::kable()
+```
+
+| Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|----------------:|------------:|-----------------:|
+|       0.0400840 |   0.0366095 |            0.003 |
+|       0.0506850 |   0.0421795 |            0.009 |
+|       0.0503724 |   0.0441377 |            0.006 |
+|       0.0394864 |   0.0366809 |            0.003 |
+|       0.0391714 |   0.0393106 |            0.000 |
+|       0.0351493 |   0.0356856 |            0.001 |
+|       0.0307691 |   0.0314600 |            0.001 |
+|       0.0393568 |   0.0400026 |            0.001 |
+|       0.0352750 |   0.0359997 |            0.001 |
+|       0.0324932 |   0.0323808 |            0.000 |
+
+### Model convergence / posterior predictive check
 
 The convergence stats also look good - Rhat’s are at 1 and we have
 “fuzzy catepillars”.
@@ -272,7 +177,7 @@ The convergence stats also look good - Rhat’s are at 1 and we have
 plot(bm)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
 
 But remember - convergence doesn’t mean great fit. Let’s evaluate
 overfitting with Posterior Predictive Checks. We’ll do 10 draws and
@@ -282,189 +187,380 @@ compare to actual.
 pp_check(bm)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 There looks like some misspecification.
 
+### Modify response (likelihood) to lognormal
+
 Let’s try instead a lognormal likelihood.
 
-``` r
-df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
+### What are model priors?
 
-bm2 <- brms::brm(diffBeliefAbsAdjusted ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown +  uncertaintyShown * preBeliefDistance + (1|usertoken) + (1|vars), data = df, family = lognormal(link = "identity", link_sigma = "log"))
+``` r
+bm2$prior
+```
+
+    ##                  prior     class                                coef     group
+    ##                 (flat)         b                                              
+    ##                 (flat)         b                   preBeliefDistance          
+    ##                 (flat)         b preBeliefDistance:sampleUncertainty          
+    ##                 (flat)         b                   sampleUncertainty          
+    ##                 (flat)         b                    visTreatmentCone          
+    ##                 (flat)         b  visTreatmentCone:preBeliefDistance          
+    ##                 (flat)         b  visTreatmentCone:sampleUncertainty          
+    ##                 (flat)         b                    visTreatmentHOPs          
+    ##                 (flat)         b  visTreatmentHOPs:preBeliefDistance          
+    ##                 (flat)         b  visTreatmentHOPs:sampleUncertainty          
+    ##  student_t(3, -1, 2.5) Intercept                                              
+    ##   student_t(3, 0, 2.5)        sd                                              
+    ##   student_t(3, 0, 2.5)        sd                                     usertoken
+    ##   student_t(3, 0, 2.5)        sd                           Intercept usertoken
+    ##   student_t(3, 0, 2.5)        sd                                          vars
+    ##   student_t(3, 0, 2.5)        sd                           Intercept      vars
+    ##   student_t(3, 0, 2.5)     sigma                                              
+    ##  resp dpar nlpar bound       source
+    ##                             default
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                             default
+    ##                             default
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                             default
+
+``` r
+coefplot(bm2)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+### Model Comparison
+
+First, let’s use leave-one-out (loo) cross-validation. It will also
+provide estimate to determine point leverage (aka outliers).
+
+``` r
+looNormal <- loo(bm, save_psis = TRUE)
+print(looNormal)
 ```
 
     ## 
-    ## SAMPLING FOR MODEL '11a53c6ad19ac062301c378ce705418c' NOW (CHAIN 1).
-    ## Chain 1: 
-    ## Chain 1: Gradient evaluation took 0.000407 seconds
-    ## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 4.07 seconds.
-    ## Chain 1: Adjust your expectations accordingly!
-    ## Chain 1: 
-    ## Chain 1: 
-    ## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 1: 
-    ## Chain 1:  Elapsed Time: 13.4402 seconds (Warm-up)
-    ## Chain 1:                8.835 seconds (Sampling)
-    ## Chain 1:                22.2752 seconds (Total)
-    ## Chain 1: 
+    ## Computed from 4000 by 4228 log-likelihood matrix
     ## 
-    ## SAMPLING FOR MODEL '11a53c6ad19ac062301c378ce705418c' NOW (CHAIN 2).
-    ## Chain 2: 
-    ## Chain 2: Gradient evaluation took 0.00028 seconds
-    ## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.8 seconds.
-    ## Chain 2: Adjust your expectations accordingly!
-    ## Chain 2: 
-    ## Chain 2: 
-    ## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 2: 
-    ## Chain 2:  Elapsed Time: 13.0335 seconds (Warm-up)
-    ## Chain 2:                8.86075 seconds (Sampling)
-    ## Chain 2:                21.8942 seconds (Total)
-    ## Chain 2: 
+    ##          Estimate    SE
+    ## elpd_loo  -1822.4  75.8
+    ## p_loo       216.1   7.6
+    ## looic      3644.9 151.7
+    ## ------
+    ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## SAMPLING FOR MODEL '11a53c6ad19ac062301c378ce705418c' NOW (CHAIN 3).
-    ## Chain 3: 
-    ## Chain 3: Gradient evaluation took 0.000284 seconds
-    ## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 2.84 seconds.
-    ## Chain 3: Adjust your expectations accordingly!
-    ## Chain 3: 
-    ## Chain 3: 
-    ## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 3: 
-    ## Chain 3:  Elapsed Time: 12.9791 seconds (Warm-up)
-    ## Chain 3:                8.89216 seconds (Sampling)
-    ## Chain 3:                21.8713 seconds (Total)
-    ## Chain 3: 
-    ## 
-    ## SAMPLING FOR MODEL '11a53c6ad19ac062301c378ce705418c' NOW (CHAIN 4).
-    ## Chain 4: 
-    ## Chain 4: Gradient evaluation took 0.000282 seconds
-    ## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 2.82 seconds.
-    ## Chain 4: Adjust your expectations accordingly!
-    ## Chain 4: 
-    ## Chain 4: 
-    ## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-    ## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
-    ## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-    ## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
-    ## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-    ## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-    ## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-    ## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-    ## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-    ## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-    ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-    ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
-    ## Chain 4: 
-    ## Chain 4:  Elapsed Time: 13.0894 seconds (Warm-up)
-    ## Chain 4:                7.39629 seconds (Sampling)
-    ## Chain 4:                20.4857 seconds (Total)
-    ## Chain 4:
+    ## All Pareto k estimates are good (k < 0.5).
+    ## See help('pareto-k-diagnostic') for details.
 
 ``` r
-bm2
+looNormal <- loo(bm, save_psis = TRUE)
+print(looNormal)
 ```
 
-    ##  Family: lognormal 
-    ##   Links: mu = identity; sigma = identity 
-    ## Formula: diffBeliefAbsAdjusted ~ visGroup * preBeliefDistance + visGroup * uncertaintyShown + uncertaintyShown * preBeliefDistance + (1 | usertoken) + (1 | vars) 
-    ##    Data: df (Number of observations: 4228) 
-    ##   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-    ##          total post-warmup draws = 4000
     ## 
-    ## Group-Level Effects: 
-    ## ~usertoken (Number of levels: 265) 
-    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)     0.46      0.03     0.41     0.52 1.00     1543     2346
+    ## Computed from 4000 by 4228 log-likelihood matrix
     ## 
-    ## ~vars (Number of levels: 16) 
-    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sd(Intercept)     0.12      0.04     0.05     0.22 1.00     1031     1662
+    ##          Estimate    SE
+    ## elpd_loo  -1822.4  75.8
+    ## p_loo       216.1   7.6
+    ## looic      3644.9 151.7
+    ## ------
+    ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## Population-Level Effects: 
-    ##                                    Estimate Est.Error l-95% CI u-95% CI Rhat
-    ## Intercept                             -2.36      0.12    -2.60    -2.12 1.00
-    ## visGroupband                          -0.14      0.13    -0.39     0.10 1.00
-    ## visGrouphop                            0.12      0.13    -0.13     0.37 1.00
-    ## preBeliefDistance                      1.90      0.15     1.61     2.19 1.00
-    ## uncertaintyShown                       0.21      0.12    -0.03     0.46 1.00
-    ## visGroupband:preBeliefDistance        -0.10      0.12    -0.34     0.13 1.00
-    ## visGrouphop:preBeliefDistance         -0.13      0.12    -0.37     0.11 1.00
-    ## visGroupband:uncertaintyShown          0.03      0.11    -0.17     0.24 1.00
-    ## visGrouphop:uncertaintyShown          -0.28      0.11    -0.50    -0.07 1.00
-    ## preBeliefDistance:uncertaintyShown    -0.29      0.15    -0.58    -0.01 1.00
-    ##                                    Bulk_ESS Tail_ESS
-    ## Intercept                              3029     2982
-    ## visGroupband                           3321     2914
-    ## visGrouphop                            3157     3157
-    ## preBeliefDistance                      3178     2610
-    ## uncertaintyShown                       3858     2899
-    ## visGroupband:preBeliefDistance         4810     2973
-    ## visGrouphop:preBeliefDistance          5240     3126
-    ## visGroupband:uncertaintyShown          5945     3336
-    ## visGrouphop:uncertaintyShown           4719     3409
-    ## preBeliefDistance:uncertaintyShown     4225     3102
-    ## 
-    ## Family Specific Parameters: 
-    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-    ## sigma     1.21      0.01     1.18     1.24 1.00     6308     3153
-    ## 
-    ## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
-    ## scale reduction factor on split chains (at convergence, Rhat = 1).
-
-We can also view the conditional effects:
+    ## All Pareto k estimates are good (k < 0.5).
+    ## See help('pareto-k-diagnostic') for details.
 
 ``` r
-conditional_effects(bm) # conditions = data.frame(size = 1)
+looLog <- loo(bm2, save_psis = TRUE)
+print(looLog)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-5.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-13-6.png)<!-- -->
+    ## 
+    ## Computed from 4000 by 4228 log-likelihood matrix
+    ## 
+    ##          Estimate    SE
+    ## elpd_loo  -1459.2  80.8
+    ## p_loo       202.7   7.1
+    ## looic      2918.5 161.7
+    ## ------
+    ## Monte Carlo SE of elpd_loo is 0.2.
+    ## 
+    ## All Pareto k estimates are good (k < 0.5).
+    ## See help('pareto-k-diagnostic') for details.
 
-But let’s now look at the posterior predictive check.
+When comparing two fitted models, we can estimate the difference in
+their expected predictive accuracy by the difference in elpd-dloo or
+elpd-dwaic.
+
+``` r
+loo_compare(looNormal, looLog)
+```
+
+    ##     elpd_diff se_diff
+    ## bm2    0.0       0.0 
+    ## bm  -363.2      78.1
+
+WAIC criterion
+
+``` r
+waicNormal = waic(bm)
+waicLog = waic(bm2)
+loo_compare(waicNormal, waicLog)
+```
+
+    ##     elpd_diff se_diff
+    ## bm2    0.0       0.0 
+    ## bm  -363.0      78.1
+
+As a last step, let’s do a posterior predictive check:
 
 ``` r
 pp_check(bm2) + xlim(-1,3)
 ```
 
-![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 Better – but we’re still overfitting. It appears to be bimodal.
 
 This may be a solution to do a Bayesian mixture for lognormal. [Chapter
 20 of “An Introduction to Bayesian Data Analysis for Cognitive
 Science”](https://vasishth.github.io/bayescogsci/book/a-mixture-model-of-the-speed-accuracy-trade-off-the-fast-guess-model-account.html)
+
+## 5b. Uncertainty Difference
+
+### Bayesian Mixed Effects
+
+Let’s now examine uncertainty difference (`diffUncertainty`). We’ll use
+the same functional form as model `m`.
+
+First let’s look at metadata around the model.
+
+``` r
+coefplot(bm_u)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+coef_mu_df <- b$data %>% rename(Parameter = term) %>% mutate(Parameter = as.character(Parameter))
+
+coef_bm_u <- coefplot(bm_u)
+
+coef_bm_u_df <- coef_bm_u$data
+coef_bm_u_df$Parameter[coef_bm_u_df$Parameter=="Intercept"] <- "(Intercept)"
+
+joined_models <- inner_join(coef_bm_u_df, coef_mu_df, by = "Parameter")
+```
+
+Notice that the coefficients are very similar to Frequentist:
+
+``` r
+joined_models %>%
+  rename(Bayesian_Estimate = Estimate, Freq_Estimate = estimate) %>%
+  select(Bayesian_Estimate, Freq_Estimate) %>%
+  mutate(abs_diff = round(abs(Bayesian_Estimate - Freq_Estimate),3)) %>%
+  knitr::kable()
+```
+
+| Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|-------------------:|---------------:|----------:|
+|          0.0862448 |      0.0861421 |     0.000 |
+|         -0.0160765 |     -0.0155808 |     0.000 |
+|         -0.0975233 |     -0.0968443 |     0.001 |
+|         -0.1337295 |     -0.1315453 |     0.002 |
+|          0.1908725 |      0.1902755 |     0.001 |
+|         -0.0689556 |     -0.0677322 |     0.001 |
+|         -0.2006140 |     -0.2010290 |     0.000 |
+|          0.0730383 |      0.0732108 |     0.000 |
+|         -0.0069977 |     -0.0068852 |     0.000 |
+|         -0.1297138 |     -0.1297598 |     0.000 |
+
+We see the same for the coefficients standard errors (though they mean
+slightly different things):
+
+``` r
+joined_models %>%
+  rename(Bayesian_Error = Est.Error, Freq_Error = std.error) %>%
+  select(Bayesian_Error, Freq_Error) %>%
+  mutate(abs_diff_error = round(abs(Bayesian_Error - Freq_Error),3)) %>%
+  knitr::kable()
+```
+
+| Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|----------------:|------------:|-----------------:|
+|       0.0609153 |   0.0567985 |            0.004 |
+|       0.0703527 |   0.0677670 |            0.003 |
+|       0.0658322 |   0.0654230 |            0.000 |
+|       0.0545973 |   0.0541252 |            0.000 |
+|       0.0452921 |   0.0448679 |            0.000 |
+|       0.0486745 |   0.0478637 |            0.001 |
+|       0.0412439 |   0.0421794 |            0.001 |
+|       0.0457825 |   0.0456403 |            0.000 |
+|       0.0483745 |   0.0483337 |            0.000 |
+|       0.0431626 |   0.0434167 |            0.000 |
+
+### Model convergence / posterior predictive check
+
+The convergence stats also look good - Rhat’s are at 1 and we have
+“fuzzy catepillars”.
+
+``` r
+plot(bm_u)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-24-3.png)<!-- -->
+
+But remember - convergence doesn’t mean great fit. Let’s evaluate
+overfitting with Posterior Predictive Checks. We’ll do 10 draws and
+compare to actual.
+
+``` r
+pp_check(bm_u)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+There looks like some misspecification but at least we’re
+
+### Modify response (likelihood) to lognormal
+
+Let’s try instead a student t distribution
+
+### What are model priors?
+
+``` r
+bm2_u$prior
+```
+
+    ##                 prior     class                                coef     group
+    ##                (flat)         b                                              
+    ##                (flat)         b                   preBeliefDistance          
+    ##                (flat)         b preBeliefDistance:sampleUncertainty          
+    ##                (flat)         b                   sampleUncertainty          
+    ##                (flat)         b                    visTreatmentCone          
+    ##                (flat)         b  visTreatmentCone:preBeliefDistance          
+    ##                (flat)         b  visTreatmentCone:sampleUncertainty          
+    ##                (flat)         b                    visTreatmentHOPs          
+    ##                (flat)         b  visTreatmentHOPs:preBeliefDistance          
+    ##                (flat)         b  visTreatmentHOPs:sampleUncertainty          
+    ##  student_t(3, 0, 2.5) Intercept                                              
+    ##         gamma(2, 0.1)        nu                                              
+    ##  student_t(3, 0, 2.5)        sd                                              
+    ##  student_t(3, 0, 2.5)        sd                                     usertoken
+    ##  student_t(3, 0, 2.5)        sd                           Intercept usertoken
+    ##  student_t(3, 0, 2.5)        sd                                          vars
+    ##  student_t(3, 0, 2.5)        sd                           Intercept      vars
+    ##  student_t(3, 0, 2.5)     sigma                                              
+    ##  resp dpar nlpar bound       source
+    ##                             default
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                             default
+    ##                             default
+    ##                             default
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                        (vectorized)
+    ##                             default
+
+``` r
+coefplot(bm2_u)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+
+### Model Comparison
+
+First, let’s use leave-one-out (loo) cross-validation. It will also
+provide estimate to determine point leverage (aka outliers).
+
+``` r
+looNormal_u <- loo(bm_u, save_psis = TRUE)
+print(looNormal_u)
+```
+
+    ## 
+    ## Computed from 4000 by 4235 log-likelihood matrix
+    ## 
+    ##          Estimate    SE
+    ## elpd_loo  -3040.4  68.0
+    ## p_loo       130.1   4.2
+    ## looic      6080.9 136.1
+    ## ------
+    ## Monte Carlo SE of elpd_loo is 0.2.
+    ## 
+    ## All Pareto k estimates are good (k < 0.5).
+    ## See help('pareto-k-diagnostic') for details.
+
+``` r
+looT <- loo(bm2_u, save_psis = TRUE)
+print(looT)
+```
+
+    ## 
+    ## Computed from 4000 by 4235 log-likelihood matrix
+    ## 
+    ##          Estimate    SE
+    ## elpd_loo  -2685.4  71.7
+    ## p_loo       146.4   1.7
+    ## looic      5370.8 143.5
+    ## ------
+    ## Monte Carlo SE of elpd_loo is 0.2.
+    ## 
+    ## All Pareto k estimates are good (k < 0.5).
+    ## See help('pareto-k-diagnostic') for details.
+
+When comparing two fitted models, we can estimate the difference in
+their expected predictive accuracy by the difference in elpd-dloo or
+elpd-dwaic.
+
+``` r
+loo_compare(looNormal_u, looT)
+```
+
+    ##       elpd_diff se_diff
+    ## bm2_u    0.0       0.0 
+    ## bm_u  -355.1      30.7
+
+WAIC criterion
+
+``` r
+waicNormal_u = waic(bm_u)
+waicT = waic(bm2_u)
+loo_compare(waicNormal_u, waicT)
+```
+
+    ##       elpd_diff se_diff
+    ## bm2_u    0.0       0.0 
+    ## bm_u  -354.9      30.7
+
+As a last step, let’s do a posterior predictive check:
+
+``` r
+pp_check(bm2_u) + xlim(-3,3)
+```
+
+![](03-vis-2020-mixedeffects_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
