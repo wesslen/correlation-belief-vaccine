@@ -225,12 +225,12 @@ Let's examine the coefficient differences with the different likelihoods.
 
 ```{r}
 un_coef <- joined_models %>%
-  rename(Normal_Estimate = Estimate.x, Lognormal_Estimate = Estimate.y) %>%
-  select(Parameter, Normal_Estimate, Lognormal_Estimate) 
+  rename(Normal_Estimate = Estimate.x, TDist_Estimate = Estimate.y) %>%
+  select(Parameter, Normal_Estimate, TDist_Estimate) 
 
 un_error <- joined_models %>%
-  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,Lognormal_low = `2.5%ile.y`, Lognormal_high = `97.5%ile.y`) %>%
-  select(Parameter, Normal_low, Normal_high, Lognormal_low, Lognormal_high) 
+  rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,TDist_low = `2.5%ile.y`, TDist_high = `97.5%ile.y`) %>%
+  select(Parameter, Normal_low, Normal_high, TDist_low, TDist_high) 
 
 var_order <- c("(Intercept)","vis_conditionscatter","vis_conditionhop")
 
@@ -239,14 +239,14 @@ inner_join(un_coef,un_error,by="Parameter") %>%
   tidyr::separate(name, c("Model","Estimate"), sep = "_") %>%
   tidyr::pivot_wider(names_from = c("Estimate")) %>%
   mutate(Parameter = factor(Parameter, levels = rev(var_order))) %>%
-  mutate(Model = factor(Model, levels = c("Normal", "Lognormal"))) %>%
+  mutate(Model = factor(Model, levels = c("Normal", "TDist"))) %>%
   ggplot(aes(x = Parameter, color = Model)) +
   geom_hline(yintercept = 0, alpha = 0.4) +
   geom_point(aes(y = Estimate),  position=position_dodge(.9)) +
   geom_errorbar(aes(ymin = low, ymax = high),  position=position_dodge(.9)) +
-  theme(legend.position = c(0.2,0.2),) +
+  theme(legend.position = c(0.2,0.85),) +
   labs(title = "Uncertainty Difference", subtitle = "Vary by Response Distribution") +
-  scale_color_manual(values = c("Lognormal" = "red",
+  scale_color_manual(values = c("TDist" = "red",
                                 "Normal"="black")) +  
   coord_flip()
 ```
