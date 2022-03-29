@@ -372,41 +372,52 @@ bm5 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_be
 save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
 ```
 
+-   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition`
+
+``` r
+bm6 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm6, file = "../models/2022/fit_baseline_abs_belief6.rda")
+```
+
 ``` r
 load("../models/2022/fit_baseline_abs_belief3.rda")
 load("../models/2022/fit_baseline_abs_belief4.rda")
 load("../models/2022/fit_baseline_abs_belief5.rda")
+load("../models/2022/fit_baseline_abs_belief6.rda")
 ```
 
 ``` r
 waic3 = waic(bm3)
 waic4 = waic(bm4)
 waic5 = waic(bm5)
+waic6 = waic(bm6)
 ```
 
 ``` r
-loo_compare(waicNormal, waicLog, waic3, waic4, waic5)
+loo_compare(waicNormal, waicLog, waic3, waic4, waic5, waic6)
 ```
 
     ##     elpd_diff se_diff
-    ## bm5    0.0       0.0 
-    ## bm4   -2.3       3.7 
-    ## bm2   -3.5       4.9 
-    ## bm3   -4.5       4.6 
-    ## bm  -626.2      60.2
+    ## bm6    0.0       0.0 
+    ## bm5   -0.3       6.0 
+    ## bm4   -2.7       4.5 
+    ## bm2   -3.8       3.2 
+    ## bm3   -4.8       3.5 
+    ## bm  -626.5      59.7
 
 ``` r
-pp_check(bm5) + xlim(-1,3)
-```
-
-![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
-
-``` r
-coef_bm5 <- coefplot(bm5)
-coef_bm5
+pp_check(bm6) + xlim(-1,3)
 ```
 
 ![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+``` r
+coef_bm6 <- coefplot(bm6)
+coef_bm6
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 ## Posterior Predictives
 
@@ -424,7 +435,7 @@ mcmc_areas(
 )
 ```
 
-![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 ``` r
 # bm5
@@ -438,4 +449,18 @@ mcmc_areas(
 )
 ```
 
-![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+
+``` r
+# bm6
+
+mcmc_areas(
+  bm6,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->

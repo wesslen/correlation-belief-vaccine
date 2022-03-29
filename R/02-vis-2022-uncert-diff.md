@@ -403,16 +403,26 @@ bm5 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_b
 save(bm5, file = "../models/2022/fit_baseline_diff_uncertainty5.rda")
 ```
 
+-   `uncertainty_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition`
+
+``` r
+bm6 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm6, file = "../models/2022/fit_baseline_diff_uncertainty6.rda")
+```
+
 ``` r
 load("../models/2022/fit_baseline_diff_uncertainty3.rda")
 load("../models/2022/fit_baseline_diff_uncertainty4.rda")
 load("../models/2022/fit_baseline_diff_uncertainty5.rda")
+load("../models/2022/fit_baseline_diff_uncertainty6.rda")
 ```
 
 ``` r
 waic3 = waic(bm3)
 waic4 = waic(bm4)
 waic5 = waic(bm5)
+waic6 = waic(bm6)
 ```
 
 ``` r
@@ -427,17 +437,24 @@ loo_compare(waicNormal, waicT, waic3, waic4, waic5)
     ## bm  -587.9      44.5
 
 ``` r
-pp_check(bm5) + xlim(-3,3)
+pp_check(bm6) + xlim(-3,3)
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 ``` r
 coef_bm5 <- coefplot(bm5)
 coef_bm5
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
+``` r
+coef_bm6 <- coefplot(bm6)
+coef_bm6
+```
+
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ## Posterior Predictives
 
@@ -455,7 +472,7 @@ mcmc_areas(
 )
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 # bm5
@@ -469,4 +486,4 @@ mcmc_areas(
 )
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
