@@ -19,33 +19,31 @@ theme_set(theme_sjplot())
 #file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
 file_output = "../data/vis2022/model_data.csv"
 #download.file(file_url,file_output)
-df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_2022_03_25.csv")
+df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
 levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
-
-df$diffUncertainty <- (df$post_CI_upper - df$post_CI_lower) - (df$pre_CI_upper - df$pre_CI_lower)
 ```
 
 ``` r
 nrow(df)
 ```
 
-    ## [1] 2532
+    ## [1] 2913
 
 ``` r
 # number of diffUncertainty missing
-sum(is.na(df$diffUncertainty))
+sum(is.na(df$uncertainty_difference))
 ```
 
-    ## [1] 64
+    ## [1] 0
 
 ## 3. Frequentist Mixed Effects Modeling (`lme4`)
 
 ``` r
 # first model is normal response
-m1 = lmer(diffUncertainty ~ vis_condition +  (1|user_token), df)
+m1 = lmer(uncertainty_difference ~ vis_condition + (1|user_token), df)
 
 # second model is lognormal response
 #m2 = glmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df, family = gaussian(link = "log"))
@@ -57,7 +55,7 @@ a <- plot_model(m1,show.values = TRUE, vline.color = "grey", value.offset = .4, 
   theme(axis.text.y = element_text(size = 8),
         plot.subtitle=element_text(size=11), plot.title = element_text(size = 1)) +
   labs(subtitle = "Uncertainty Difference", title = "") +
-  ylim(-0.25, 0.9)
+  ylim(-0.2, 0.2)
 
 a
 ```
@@ -76,7 +74,7 @@ functional form as model `m`.
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(diffUncertainty ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df)
 
 save(bm, file = "../models/2022/fit_baseline_diff_uncertainty.rda")
 ```
@@ -115,9 +113,9 @@ joined_models %>%
 
 | Parameter             | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
 |:----------------------|-------------------:|---------------:|----------:|
-| (Intercept)           |          0.0078763 |      0.0070269 |     0.001 |
-| vis\_conditionhop     |         -0.0259567 |     -0.0245968 |     0.001 |
-| vis\_conditionscatter |         -0.0180187 |     -0.0175578 |     0.000 |
+| (Intercept)           |         -0.0075922 |     -0.0079357 |         0 |
+| vis\_conditionhop     |          0.0107194 |      0.0107641 |         0 |
+| vis\_conditionscatter |         -0.0521166 |     -0.0517034 |         0 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -132,9 +130,9 @@ joined_models %>%
 
 | Parameter             | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
 |:----------------------|----------------:|------------:|-----------------:|
-| (Intercept)           |       0.0185826 |   0.0184454 |                0 |
-| vis\_conditionhop     |       0.0274114 |   0.0269828 |                0 |
-| vis\_conditionscatter |       0.0282604 |   0.0280485 |                0 |
+| (Intercept)           |       0.0160656 |   0.0161723 |                0 |
+| vis\_conditionhop     |       0.0232033 |   0.0229048 |                0 |
+| vis\_conditionscatter |       0.0230735 |   0.0232196 |                0 |
 
 ### Model convergence / posterior predictive check
 
@@ -169,7 +167,7 @@ save(bm2, file = "../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
 
 ``` r
-load("../models/2022/fit_baseline_abs_belief2.rda")
+load("../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
 
 ### What are model priors?
@@ -178,26 +176,26 @@ load("../models/2022/fit_baseline_abs_belief2.rda")
 bm2$prior
 ```
 
-    ##                    prior     class                 coef      group resp dpar
-    ##                   (flat)         b                                          
-    ##                   (flat)         b     vis_conditionhop                     
-    ##                   (flat)         b vis_conditionscatter                     
-    ##               beta(1, 1)        hu                                          
-    ##  student_t(3, -1.3, 2.5) Intercept                                          
-    ##     student_t(3, 0, 2.5)        sd                                          
-    ##     student_t(3, 0, 2.5)        sd                      user_token          
-    ##     student_t(3, 0, 2.5)        sd            Intercept user_token          
-    ##     student_t(3, 0, 2.5)     sigma                                          
-    ##  nlpar bound       source
-    ##                   default
-    ##              (vectorized)
-    ##              (vectorized)
-    ##                   default
-    ##                   default
-    ##                   default
-    ##              (vectorized)
-    ##              (vectorized)
-    ##                   default
+    ##                 prior     class                 coef      group resp dpar nlpar
+    ##                (flat)         b                                                
+    ##                (flat)         b     vis_conditionhop                           
+    ##                (flat)         b vis_conditionscatter                           
+    ##  student_t(3, 0, 2.5) Intercept                                                
+    ##         gamma(2, 0.1)        nu                                                
+    ##  student_t(3, 0, 2.5)        sd                                                
+    ##  student_t(3, 0, 2.5)        sd                      user_token                
+    ##  student_t(3, 0, 2.5)        sd            Intercept user_token                
+    ##  student_t(3, 0, 2.5)     sigma                                                
+    ##  bound       source
+    ##             default
+    ##        (vectorized)
+    ##        (vectorized)
+    ##             default
+    ##             default
+    ##             default
+    ##        (vectorized)
+    ##        (vectorized)
+    ##             default
 
 ### What are the coefficients?
 
@@ -219,19 +217,19 @@ print(looNormal)
 ```
 
     ## 
-    ## Computed from 4000 by 2468 log-likelihood matrix
+    ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1031.2  64.6
-    ## p_loo       128.5   6.7
-    ## looic      2062.3 129.3
+    ## elpd_loo  -1368.6  77.7
+    ## p_loo       121.2   6.6
+    ## looic      2737.2 155.3
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
     ## Pareto k diagnostic values:
     ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2464  99.8%   644       
-    ##  (0.5, 0.7]   (ok)          4   0.2%   335       
+    ## (-Inf, 0.5]   (good)     2911  99.9%   301       
+    ##  (0.5, 0.7]   (ok)          2   0.1%   268       
     ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
     ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
     ## 
@@ -244,19 +242,19 @@ print(looNormal)
 ```
 
     ## 
-    ## Computed from 4000 by 2468 log-likelihood matrix
+    ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1031.2  64.6
-    ## p_loo       128.5   6.7
-    ## looic      2062.3 129.3
+    ## elpd_loo  -1368.6  77.7
+    ## p_loo       121.2   6.6
+    ## looic      2737.2 155.3
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
     ## Pareto k diagnostic values:
     ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2464  99.8%   644       
-    ##  (0.5, 0.7]   (ok)          4   0.2%   335       
+    ## (-Inf, 0.5]   (good)     2911  99.9%   301       
+    ##  (0.5, 0.7]   (ok)          2   0.1%   268       
     ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
     ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
     ## 
@@ -264,28 +262,21 @@ print(looNormal)
     ## See help('pareto-k-diagnostic') for details.
 
 ``` r
-looLog <- loo(bm2, save_psis = TRUE)
-print(looLog)
+looT <- loo(bm2, save_psis = TRUE)
+print(looT)
 ```
 
     ## 
-    ## Computed from 4000 by 2532 log-likelihood matrix
+    ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo   -485.7  60.9
-    ## p_loo       112.7   4.5
-    ## looic       971.3 121.8
+    ## elpd_loo   -784.4  66.2
+    ## p_loo       165.7   2.5
+    ## looic      1568.9 132.3
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## Pareto k diagnostic values:
-    ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2530  99.9%   1150      
-    ##  (0.5, 0.7]   (ok)          2   0.1%   309       
-    ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
-    ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
-    ## 
-    ## All Pareto k estimates are ok (k < 0.7).
+    ## All Pareto k estimates are good (k < 0.5).
     ## See help('pareto-k-diagnostic') for details.
 
 When comparing two fitted models, we can estimate the difference in
@@ -293,17 +284,24 @@ their expected predictive accuracy by the difference in elpd-dloo or
 elpd-dwaic.
 
 ``` r
-#received an error as each model doesn't have same number of points
-#loo_compare(looNormal, looLog)
+loo_compare(looNormal, looT)
 ```
+
+    ##     elpd_diff se_diff
+    ## bm2    0.0       0.0 
+    ## bm  -584.2      44.8
 
 WAIC criterion
 
 ``` r
 waicNormal = waic(bm)
-waicLog = waic(bm2)
-#loo_compare(waicNormal, waicLog)
+waicT = waic(bm2)
+loo_compare(waicNormal, waicT)
 ```
+
+    ##     elpd_diff se_diff
+    ## bm2    0.0       0.0 
+    ## bm  -583.9      44.7
 
 As a last step, let’s do a posterior predictive check:
 
@@ -373,6 +371,6 @@ joined_models %>%
 
 | Parameter             | Normal\_Error | Lognormal\_Error | Diff\_Error |
 |:----------------------|--------------:|-----------------:|------------:|
-| (Intercept)           |     0.0185826 |        0.0640709 |      -0.045 |
-| vis\_conditionhop     |     0.0274114 |        0.0957013 |      -0.068 |
-| vis\_conditionscatter |     0.0282604 |        0.0982067 |      -0.070 |
+| (Intercept)           |     0.0160656 |        0.0116663 |       0.004 |
+| vis\_conditionhop     |     0.0232033 |        0.0164091 |       0.007 |
+| vis\_conditionscatter |     0.0230735 |        0.0162590 |       0.007 |

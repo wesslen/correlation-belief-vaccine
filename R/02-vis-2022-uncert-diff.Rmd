@@ -26,14 +26,11 @@ theme_set(theme_sjplot())
 #file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
 file_output = "../data/vis2022/model_data.csv"
 #download.file(file_url,file_output)
-df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_2022_03_25.csv")
+df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
 levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
-
-df$diffUncertainty <- (df$post_CI_upper - df$post_CI_lower) - (df$pre_CI_upper - df$pre_CI_lower)
-
 ```
 
 ```{r}
@@ -42,15 +39,16 @@ nrow(df)
 
 ```{r}
 # number of diffUncertainty missing
-sum(is.na(df$diffUncertainty))
+sum(is.na(df$uncertainty_difference))
 ```
 
 
 ## 3. Frequentist Mixed Effects Modeling (`lme4`)
 
 ```{r lme4-modeling}
+
 # first model is normal response
-m1 = lmer(diffUncertainty ~ vis_condition +  (1|user_token), df)
+m1 = lmer(uncertainty_difference ~ vis_condition + (1|user_token), df)
 
 # second model is lognormal response
 #m2 = glmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df, family = gaussian(link = "log"))
@@ -62,7 +60,7 @@ a <- plot_model(m1,show.values = TRUE, vline.color = "grey", value.offset = .4, 
   theme(axis.text.y = element_text(size = 8),
         plot.subtitle=element_text(size=11), plot.title = element_text(size = 1)) +
   labs(subtitle = "Uncertainty Difference", title = "") +
-  ylim(-0.25, 0.9)
+  ylim(-0.2, 0.2)
 
 a
 ```
@@ -77,7 +75,7 @@ Let's examine the first regression to estimate the effect on the Uncertainty Dif
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(diffUncertainty ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df)
 
 save(bm, file = "../models/2022/fit_baseline_diff_uncertainty.rda")
 ```
@@ -149,7 +147,7 @@ save(bm2, file = "../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
 
 ```{r}
-load("../models/2022/fit_baseline_abs_belief2.rda")
+load("../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
 
 ### What are model priors?
@@ -181,23 +179,22 @@ print(looNormal)
 ```
 
 ```{r}
-looLog <- loo(bm2, save_psis = TRUE)
-print(looLog)
+looT <- loo(bm2, save_psis = TRUE)
+print(looT)
 ```
 
 When comparing two fitted models, we can estimate the difference in their expected predictive accuracy by the difference in elpd-dloo or elpd-dwaic.
 
 ```{r}
-#received an error as each model doesn't have same number of points
-#loo_compare(looNormal, looLog)
+loo_compare(looNormal, looT)
 ```
 
 WAIC criterion
 
 ```{r}
 waicNormal = waic(bm)
-waicLog = waic(bm2)
-#loo_compare(waicNormal, waicLog)
+waicT = waic(bm2)
+loo_compare(waicNormal, waicT)
 ```
 
 As a last step, let's do a posterior predictive check:

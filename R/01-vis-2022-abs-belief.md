@@ -19,24 +19,22 @@ theme_set(theme_sjplot())
 #file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
 file_output = "../data/vis2022/model_data.csv"
 #download.file(file_url,file_output)
-df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_2022_03_25.csv")
+df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
 levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
-
-df$diffBeliefAbs <- abs(df$post_belief-df$pre_belief)
 ```
 
 ``` r
 nrow(df)
 ```
 
-    ## [1] 2532
+    ## [1] 2913
 
 ``` r
-# number of diffBeliefAbs missing
-sum(is.na(df$diffBeliefAbs))
+# number of  missing
+sum(is.na(df$abs_belief_difference))
 ```
 
     ## [1] 0
@@ -46,7 +44,7 @@ sum(is.na(df$diffBeliefAbs))
 ``` r
 # Absolute Belief Distance
 # first model is normal response
-m1 = lmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df)
+m1 = lmer(abs_belief_difference ~ vis_condition +  (1|user_token), df)
 
 # second model is lognormal response
 #m2 = glmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df, family = gaussian(link = "log"))
@@ -77,7 +75,7 @@ form as model `m`.
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(diffBeliefAbs ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df)
 
 save(bm, file = "../models/2022/fit_baseline_abs_belief.rda")
 ```
@@ -116,9 +114,9 @@ joined_models %>%
 
 | Parameter             | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
 |:----------------------|-------------------:|---------------:|----------:|
-| (Intercept)           |          0.4178505 |      0.4186077 |     0.001 |
-| vis\_conditionhop     |         -0.0177092 |     -0.0180369 |     0.000 |
-| vis\_conditionscatter |         -0.0101661 |     -0.0104712 |     0.000 |
+| (Intercept)           |          0.4178505 |      0.4249126 |     0.007 |
+| vis\_conditionhop     |         -0.0177092 |     -0.0248383 |     0.007 |
+| vis\_conditionscatter |         -0.0101661 |     -0.0260293 |     0.016 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -133,9 +131,9 @@ joined_models %>%
 
 | Parameter             | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
 |:----------------------|----------------:|------------:|-----------------:|
-| (Intercept)           |       0.0206086 |   0.0202500 |                0 |
-| vis\_conditionhop     |       0.0299879 |   0.0296429 |                0 |
-| vis\_conditionscatter |       0.0305282 |   0.0307871 |                0 |
+| (Intercept)           |       0.0206086 |   0.0195949 |            0.001 |
+| vis\_conditionhop     |       0.0299879 |   0.0277424 |            0.002 |
+| vis\_conditionscatter |       0.0305282 |   0.0280821 |            0.002 |
 
 ### Model convergence / posterior predictive check
 
@@ -163,10 +161,10 @@ pp_check(bm)
 Let’s try instead a lognormal likelihood (specifically the
 `hurdle_lognormal` because we have a handful of cases where
 diffBeliefAbs equals zero (see [brms
-comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2)))..
+comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2))).
 
 ``` r
-df$diffBeliefAbsAdjusted <- ifelse(df$diffBeliefAbs==0,0.01,df$diffBeliefAbs)
+df$diffBeliefAbsAdjusted <- ifelse(df$abs_belief_difference==0,0.01,df$abs_belief_difference)
 
 bm2 <- brms::brm(diffBeliefAbsAdjusted ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"))
 
