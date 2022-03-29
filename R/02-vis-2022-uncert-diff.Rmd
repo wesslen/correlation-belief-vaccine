@@ -23,10 +23,7 @@ theme_set(theme_sjplot())
 ## 2. Load Data
 
 ```{r load-data}
-#file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
-file_output = "../data/vismodel_data.csv"
-#download.file(file_url,file_output)
-df <- readr::read_csv("../data/visbelief_data_prolific_all_exclude.csv")
+df <- readr::read_csv("../data/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
