@@ -29,3 +29,5 @@ vignettes/*.pdf
 renv.lock
 .DS_Store
 .Rprofile
+
+/archive/

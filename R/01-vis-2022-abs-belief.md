@@ -19,7 +19,7 @@ theme_set(theme_sjplot())
 ## 2. Load Data
 
 ``` r
-df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
+df <- readr::read_csv("../data/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
@@ -74,11 +74,11 @@ library(brms)
 # assume normal response variable
 bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm, file = "../models/2022/fit_baseline_abs_belief.rda")
+save(bm, file = "../models/fit_baseline_abs_belief.rda")
 ```
 
 ``` r
-load("../models/2022/fit_baseline_abs_belief.rda")
+load("../models/fit_baseline_abs_belief.rda")
 ```
 
 First let’s look at metadata around the model.
@@ -163,11 +163,11 @@ comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-g
 ``` r
 bm2 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm2, file = "../models/2022/fit_baseline_abs_belief2.rda")
+save(bm2, file = "../models/fit_baseline_abs_belief2.rda")
 ```
 
 ``` r
-load("../models/2022/fit_baseline_abs_belief2.rda")
+load("../models/fit_baseline_abs_belief2.rda")
 ```
 
 ### What are model priors?
@@ -388,7 +388,7 @@ For model selection, we will consider additional models.
 # https://discourse.mc-stan.org/t/smooth-spline-modeling-with-brm/6364
 bm3 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm3, file = "../models/2022/fit_baseline_abs_belief3.rda")
+save(bm3, file = "../models/fit_baseline_abs_belief3.rda")
 ```
 
 -   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition`
@@ -396,7 +396,7 @@ save(bm3, file = "../models/2022/fit_baseline_abs_belief3.rda")
 ``` r
 bm4 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm4, file = "../models/2022/fit_baseline_abs_belief4.rda")
+save(bm4, file = "../models/fit_baseline_abs_belief4.rda")
 ```
 
 -   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition`
@@ -404,7 +404,7 @@ save(bm4, file = "../models/2022/fit_baseline_abs_belief4.rda")
 ``` r
 bm5 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
+save(bm5, file = "../models/fit_baseline_abs_belief5.rda")
 ```
 
 -   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition`
@@ -412,14 +412,14 @@ save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
 ``` r
 bm6 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude_strength * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
-save(bm6, file = "../models/2022/fit_baseline_abs_belief6.rda")
+save(bm6, file = "../models/fit_baseline_abs_belief6.rda")
 ```
 
 ``` r
-load("../models/2022/fit_baseline_abs_belief3.rda")
-load("../models/2022/fit_baseline_abs_belief4.rda")
-load("../models/2022/fit_baseline_abs_belief5.rda")
-load("../models/2022/fit_baseline_abs_belief6.rda")
+load("../models/fit_baseline_abs_belief3.rda")
+load("../models/fit_baseline_abs_belief4.rda")
+load("../models/fit_baseline_abs_belief5.rda")
+load("../models/fit_baseline_abs_belief6.rda")
 ```
 
 ``` r

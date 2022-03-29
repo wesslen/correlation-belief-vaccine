@@ -21,7 +21,7 @@ library(brms)
     ##     ar
 
 ``` r
-df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
+df <- readr::read_csv("../data/belief_data_prolific_all_exclude.csv")
 ```
 
     ## New names:
@@ -55,9 +55,9 @@ library(ggplot2)
 ## Absolute Belief Models
 
 ``` r
-load("../models/2022/fit_baseline_abs_belief2.rda")
-load("../models/2022/fit_baseline_abs_belief5.rda")
-load("../models/2022/fit_baseline_abs_belief6.rda")
+load("../models/fit_baseline_abs_belief2.rda")
+load("../models/fit_baseline_abs_belief5.rda")
+load("../models/fit_baseline_abs_belief6.rda")
 ```
 
 ### Baseline
@@ -629,9 +629,9 @@ plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition"
 ## Uncertainty Difference Models
 
 ``` r
-load("../models/2022/fit_baseline_diff_uncertainty2.rda")
-load("../models/2022/fit_baseline_diff_uncertainty5.rda")
-load("../models/2022/fit_baseline_diff_uncertainty6.rda")
+load("../models/fit_baseline_diff_uncertainty2.rda")
+load("../models/fit_baseline_diff_uncertainty5.rda")
+load("../models/fit_baseline_diff_uncertainty6.rda")
 ```
 
 ### Baseline
