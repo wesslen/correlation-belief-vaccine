@@ -426,11 +426,12 @@ waic6 = waic(bm6)
 ```
 
 ``` r
-loo_compare(waicNormal, waicT, waic3, waic4, waic5)
+loo_compare(waicNormal, waicT, waic3, waic4, waic5, waic6)
 ```
 
     ##     elpd_diff se_diff
     ## bm5    0.0       0.0 
+    ## bm6   -1.5       4.9 
     ## bm4   -3.3       2.8 
     ## bm3   -3.9       3.4 
     ## bm2   -4.2       4.3 

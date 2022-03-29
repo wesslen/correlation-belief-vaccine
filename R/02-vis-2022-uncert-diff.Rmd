@@ -311,7 +311,7 @@ waic6 = waic(bm6)
 ```
 
 ```{r}
-loo_compare(waicNormal, waicT, waic3, waic4, waic5)
+loo_compare(waicNormal, waicT, waic3, waic4, waic5, waic6)
 ```
 
 
