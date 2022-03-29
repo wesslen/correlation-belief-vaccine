@@ -200,11 +200,46 @@ bm2$prior
 ### What are the coefficients?
 
 ``` r
+bm2
+```
+
+    ##  Family: student 
+    ##   Links: mu = identity; sigma = identity; nu = identity 
+    ## Formula: uncertainty_difference ~ vis_condition + (1 | user_token) 
+    ##    Data: df (Number of observations: 2913) 
+    ##   Draws: 4 chains, each with iter = 1000; warmup = 0; thin = 1;
+    ##          total post-warmup draws = 4000
+    ## 
+    ## Group-Level Effects: 
+    ## ~user_token (Number of levels: 261) 
+    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sd(Intercept)     0.08      0.01     0.06     0.10 1.00      928     2004
+    ## 
+    ## Population-Level Effects: 
+    ##                          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
+    ## Intercept                    0.00      0.01    -0.02     0.02 1.00     2115
+    ## vis_conditionuncertainty    -0.05      0.02    -0.08    -0.02 1.00     2359
+    ## vis_conditionhop             0.00      0.02    -0.03     0.03 1.00     2145
+    ##                          Tail_ESS
+    ## Intercept                    2949
+    ## vis_conditionuncertainty     2947
+    ## vis_conditionhop             2831
+    ## 
+    ## Family Specific Parameters: 
+    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sigma     0.17      0.01     0.16     0.18 1.00     3194     3179
+    ## nu        1.86      0.09     1.69     2.05 1.00     3587     3264
+    ## 
+    ## Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
+    ## scale reduction factor on split chains (at convergence, Rhat = 1).
+
+``` r
 coef_bm2 <- coefplot(bm2)
 coef_bm2
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ### Model Comparison
 
@@ -309,7 +344,7 @@ As a last step, let’s do a posterior predictive check:
 pp_check(bm2) + xlim(-3,3)
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ### Compare Coefficients
 
@@ -356,7 +391,7 @@ inner_join(un_coef,un_error,by="Parameter") %>%
   coord_flip()
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 We see the same for the coefficients standard errors:
 
@@ -406,7 +441,7 @@ save(bm5, file = "../models/2022/fit_baseline_diff_uncertainty5.rda")
 -   `uncertainty_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition`
 
 ``` r
-bm6 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+bm6 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_attitude_strength * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm6, file = "../models/2022/fit_baseline_diff_uncertainty6.rda")
 ```
@@ -431,7 +466,7 @@ loo_compare(waicNormal, waicT, waic3, waic4, waic5, waic6)
 
     ##     elpd_diff se_diff
     ## bm5    0.0       0.0 
-    ## bm6   -1.5       4.9 
+    ## bm6   -0.1       5.1 
     ## bm4   -3.3       2.8 
     ## bm3   -3.9       3.4 
     ## bm2   -4.2       4.3 
@@ -441,21 +476,109 @@ loo_compare(waicNormal, waicT, waic3, waic4, waic5, waic6)
 pp_check(bm6) + xlim(-3,3)
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
+``` r
+bm5
+```
+
+    ##  Family: student 
+    ##   Links: mu = identity; sigma = identity; nu = identity 
+    ## Formula: uncertainty_difference ~ vis_condition + (1 | user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition 
+    ##    Data: df (Number of observations: 2913) 
+    ##   Draws: 4 chains, each with iter = 1000; warmup = 0; thin = 1;
+    ##          total post-warmup draws = 4000
+    ## 
+    ## Group-Level Effects: 
+    ## ~user_token (Number of levels: 261) 
+    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sd(Intercept)     0.08      0.01     0.06     0.10 1.00     1072     2047
+    ## 
+    ## Population-Level Effects: 
+    ##                                              Estimate Est.Error l-95% CI
+    ## Intercept                                       -0.00      0.01    -0.03
+    ## vis_conditionuncertainty                        -0.04      0.02    -0.08
+    ## vis_conditionhop                                 0.01      0.02    -0.03
+    ## pre_belief_distance                              0.03      0.01     0.00
+    ## true_correlation                                -0.06      0.02    -0.11
+    ## vis_conditionuncertainty:pre_belief_distance    -0.04      0.02    -0.08
+    ## vis_conditionhop:pre_belief_distance            -0.07      0.02    -0.11
+    ## vis_conditionuncertainty:true_correlation        0.06      0.03    -0.00
+    ## vis_conditionhop:true_correlation                0.06      0.03    -0.00
+    ##                                              u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## Intercept                                        0.02 1.00     1445     1952
+    ## vis_conditionuncertainty                        -0.01 1.00     1551     2337
+    ## vis_conditionhop                                 0.04 1.00     1534     2169
+    ## pre_belief_distance                              0.06 1.00     1602     2230
+    ## true_correlation                                -0.02 1.00     1614     2546
+    ## vis_conditionuncertainty:pre_belief_distance     0.00 1.00     1722     2649
+    ## vis_conditionhop:pre_belief_distance            -0.03 1.00     1807     2673
+    ## vis_conditionuncertainty:true_correlation        0.12 1.00     1860     2566
+    ## vis_conditionhop:true_correlation                0.13 1.00     1951     2310
+    ## 
+    ## Family Specific Parameters: 
+    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sigma     0.17      0.01     0.16     0.18 1.00     2488     2538
+    ## nu        1.86      0.10     1.69     2.06 1.00     3009     2873
+    ## 
+    ## Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
+    ## scale reduction factor on split chains (at convergence, Rhat = 1).
 
 ``` r
 coef_bm5 <- coefplot(bm5)
 coef_bm5
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+
+``` r
+bm6
+```
+
+    ##  Family: student 
+    ##   Links: mu = identity; sigma = identity; nu = identity 
+    ## Formula: uncertainty_difference ~ vis_condition + (1 | user_token) + pre_attitude_strength * vis_condition 
+    ##    Data: df (Number of observations: 2913) 
+    ##   Draws: 4 chains, each with iter = 1000; warmup = 0; thin = 1;
+    ##          total post-warmup draws = 4000
+    ## 
+    ## Group-Level Effects: 
+    ## ~user_token (Number of levels: 261) 
+    ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sd(Intercept)     0.08      0.01     0.07     0.10 1.00      870     1933
+    ## 
+    ## Population-Level Effects: 
+    ##                                                Estimate Est.Error l-95% CI
+    ## Intercept                                         -0.03      0.02    -0.07
+    ## vis_conditionuncertainty                          -0.04      0.03    -0.10
+    ## vis_conditionhop                                  -0.00      0.03    -0.06
+    ## pre_attitude_strength                              0.01      0.01    -0.00
+    ## vis_conditionuncertainty:pre_attitude_strength    -0.00      0.01    -0.02
+    ## vis_conditionhop:pre_attitude_strength             0.00      0.01    -0.01
+    ##                                                u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## Intercept                                          0.01 1.00     2447     2659
+    ## vis_conditionuncertainty                           0.02 1.00     2344     2187
+    ## vis_conditionhop                                   0.05 1.00     2423     2930
+    ## pre_attitude_strength                              0.02 1.00     2786     2831
+    ## vis_conditionuncertainty:pre_attitude_strength     0.01 1.00     2778     2726
+    ## vis_conditionhop:pre_attitude_strength             0.02 1.00     2799     3104
+    ## 
+    ## Family Specific Parameters: 
+    ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+    ## sigma     0.17      0.01     0.16     0.18 1.00     3244     2756
+    ## nu        1.85      0.10     1.68     2.04 1.00     4165     2934
+    ## 
+    ## Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
+    ## and Tail_ESS are effective sample size measures, and Rhat is the potential
+    ## scale reduction factor on split chains (at convergence, Rhat = 1).
 
 ``` r
 coef_bm6 <- coefplot(bm6)
 coef_bm6
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 ## Posterior Predictives
 
@@ -473,7 +596,7 @@ mcmc_areas(
 )
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 # bm5
@@ -487,4 +610,4 @@ mcmc_areas(
 )
 ```
 
-![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->

@@ -155,6 +155,11 @@ bm2$prior
 ### What are the coefficients?
 
 ```{r}
+bm2
+```
+
+
+```{r}
 coef_bm2 <- coefplot(bm2)
 coef_bm2
 ```
@@ -281,7 +286,7 @@ save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
 * `abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition`
 
 ```{r include=TRUE,eval=FALSE}
-bm6 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+bm6 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_attitude_strength * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm6, file = "../models/2022/fit_baseline_abs_belief6.rda")
 ```
@@ -310,8 +315,17 @@ pp_check(bm6) + xlim(-1,3)
 ```
 
 ```{r}
+bm5
+```
+
+
+```{r}
 coef_bm5 <- coefplot(bm5)
 coef_bm5
+```
+
+```{r}
+bm6
 ```
 
 ```{r}
