@@ -30,7 +30,7 @@ df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
-levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
+levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
 ```
 
 ```{r}
@@ -38,7 +38,7 @@ nrow(df)
 ```
 
 ```{r}
-# number of diffUncertainty missing
+# number of uncertainty_difference missing
 sum(is.na(df$uncertainty_difference))
 ```
 
@@ -69,13 +69,13 @@ a
 
 ### Bayesian Mixed Effects
 
-Let's examine the first regression to estimate the effect on the Uncertainty Difference (`diffUncertainty`). We'll use the same functional form as model `m`.
+Let's examine the first regression to estimate the effect on the Uncertainty Difference (`uncertainty_difference`). We'll use the same functional form as model `m`.
 
 ```{r eval=FALSE, include=TRUE}
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df, backend = "cmdstanr", cores = parallel::detectCores() -1)
 
 save(bm, file = "../models/2022/fit_baseline_diff_uncertainty.rda")
 ```
@@ -141,7 +141,7 @@ Let's try instead a distribution likelihood because of the overdispersion (fat t
 
 ```{r include=TRUE,eval=FALSE}
 
-bm2 <- brms::brm(diffUncertainty ~ vis_condition + (1|user_token), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"))
+bm2 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm2, file = "../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
@@ -206,7 +206,7 @@ pp_check(bm2) + xlim(-3,3)
 
 ### Compare Coefficients
 
-As a final check, let's compare the coefficients for the normal Bayesian mixed effects model and the (hurdle) Lognormal Bayesian mixed effects model.
+As a final check, let's compare the coefficients for the normal Bayesian mixed effects model and the t Distribution Bayesian mixed effects model.
 
 ```{r}
 coef_bm_df <- coef_bm$data
@@ -229,7 +229,7 @@ un_error <- joined_models %>%
   rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,TDist_low = `2.5%ile.y`, TDist_high = `97.5%ile.y`) %>%
   select(Parameter, Normal_low, Normal_high, TDist_low, TDist_high) 
 
-var_order <- c("(Intercept)","vis_conditionscatter","vis_conditionhop")
+var_order <- c("(Intercept)","vis_conditionuncertainty","vis_conditionhop")
 
 inner_join(un_coef,un_error,by="Parameter") %>%
   tidyr::pivot_longer(-Parameter) %>%
@@ -256,6 +256,90 @@ joined_models %>%
   select(Parameter, Normal_Error, Lognormal_Error) %>%
   mutate(Diff_Error = round(Normal_Error - Lognormal_Error,3)) %>%
   knitr::kable()
+```
+
+
+## Candidate models
+
+For model selection, we will consider additional models.
+
+* `uncertainty_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+# https://discourse.mc-stan.org/t/smooth-spline-modeling-with-brm/6364
+bm3 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm3, file = "../models/2022/fit_baseline_diff_uncertainty3.rda")
+```
+
+* `uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+bm4 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm4, file = "../models/2022/fit_baseline_diff_uncertainty4.rda")
+```
+
+* `uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+bm5 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm5, file = "../models/2022/fit_baseline_diff_uncertainty5.rda")
+```
+
+```{r}
+load("../models/2022/fit_baseline_diff_uncertainty3.rda")
+load("../models/2022/fit_baseline_diff_uncertainty4.rda")
+load("../models/2022/fit_baseline_diff_uncertainty5.rda")
+```
+
+```{r}
+waic3 = waic(bm3)
+waic4 = waic(bm4)
+waic5 = waic(bm5)
+```
+
+```{r}
+loo_compare(waicNormal, waicT, waic3, waic4, waic5)
+```
+
+
+```{r}
+pp_check(bm5) + xlim(-3,3)
+```
+
+```{r}
+coef_bm5 <- coefplot(bm5)
+coef_bm5
+```
+
+## Posterior Predictives
+
+```{r}
+library(bayesplot)
+
+# bm2
+
+mcmc_areas(
+  bm2,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+```{r}
+# bm5
+
+mcmc_areas(
+  bm5,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
 ```
 
 

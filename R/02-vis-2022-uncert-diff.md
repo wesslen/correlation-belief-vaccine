@@ -23,7 +23,7 @@ df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
-levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
+levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
 ```
 
 ``` r
@@ -33,7 +33,7 @@ nrow(df)
     ## [1] 2913
 
 ``` r
-# number of diffUncertainty missing
+# number of uncertainty_difference missing
 sum(is.na(df$uncertainty_difference))
 ```
 
@@ -67,14 +67,14 @@ a
 ### Bayesian Mixed Effects
 
 Let’s examine the first regression to estimate the effect on the
-Uncertainty Difference (`diffUncertainty`). We’ll use the same
+Uncertainty Difference (`uncertainty_difference`). We’ll use the same
 functional form as model `m`.
 
 ``` r
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df, backend = "cmdstanr", cores = parallel::detectCores() -1)
 
 save(bm, file = "../models/2022/fit_baseline_diff_uncertainty.rda")
 ```
@@ -111,11 +111,11 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
-|:----------------------|-------------------:|---------------:|----------:|
-| (Intercept)           |         -0.0075922 |     -0.0079357 |         0 |
-| vis\_conditionhop     |          0.0107194 |      0.0107641 |         0 |
-| vis\_conditionscatter |         -0.0521166 |     -0.0517034 |         0 |
+| Parameter                 | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|:--------------------------|-------------------:|---------------:|----------:|
+| (Intercept)               |         -0.0080190 |     -0.0079357 |         0 |
+| vis\_conditionhop         |          0.0105158 |      0.0107641 |         0 |
+| vis\_conditionuncertainty |         -0.0513417 |     -0.0517034 |         0 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -128,11 +128,11 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
-|:----------------------|----------------:|------------:|-----------------:|
-| (Intercept)           |       0.0160656 |   0.0161723 |                0 |
-| vis\_conditionhop     |       0.0232033 |   0.0229048 |                0 |
-| vis\_conditionscatter |       0.0230735 |   0.0232196 |                0 |
+| Parameter                 | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|:--------------------------|----------------:|------------:|-----------------:|
+| (Intercept)               |       0.0159581 |   0.0161723 |                0 |
+| vis\_conditionhop         |       0.0225645 |   0.0229048 |                0 |
+| vis\_conditionuncertainty |       0.0231204 |   0.0232196 |                0 |
 
 ### Model convergence / posterior predictive check
 
@@ -161,7 +161,7 @@ Let’s try instead a distribution likelihood because of the
 overdispersion (fat tails) we observe in the data.
 
 ``` r
-bm2 <- brms::brm(diffUncertainty ~ vis_condition + (1|user_token), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"))
+bm2 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token), data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm2, file = "../models/2022/fit_baseline_diff_uncertainty2.rda")
 ```
@@ -176,26 +176,26 @@ load("../models/2022/fit_baseline_diff_uncertainty2.rda")
 bm2$prior
 ```
 
-    ##                 prior     class                 coef      group resp dpar nlpar
-    ##                (flat)         b                                                
-    ##                (flat)         b     vis_conditionhop                           
-    ##                (flat)         b vis_conditionscatter                           
-    ##  student_t(3, 0, 2.5) Intercept                                                
-    ##         gamma(2, 0.1)        nu                                                
-    ##  student_t(3, 0, 2.5)        sd                                                
-    ##  student_t(3, 0, 2.5)        sd                      user_token                
-    ##  student_t(3, 0, 2.5)        sd            Intercept user_token                
-    ##  student_t(3, 0, 2.5)     sigma                                                
-    ##  bound       source
-    ##             default
-    ##        (vectorized)
-    ##        (vectorized)
-    ##             default
-    ##             default
-    ##             default
-    ##        (vectorized)
-    ##        (vectorized)
-    ##             default
+    ##                 prior     class                     coef      group resp dpar
+    ##                (flat)         b                                              
+    ##                (flat)         b         vis_conditionhop                     
+    ##                (flat)         b vis_conditionuncertainty                     
+    ##  student_t(3, 0, 2.5) Intercept                                              
+    ##         gamma(2, 0.1)        nu                                              
+    ##  student_t(3, 0, 2.5)        sd                                              
+    ##  student_t(3, 0, 2.5)        sd                          user_token          
+    ##  student_t(3, 0, 2.5)        sd                Intercept user_token          
+    ##  student_t(3, 0, 2.5)     sigma                                              
+    ##  nlpar bound       source
+    ##                   default
+    ##              (vectorized)
+    ##              (vectorized)
+    ##                   default
+    ##                   default
+    ##                   default
+    ##              (vectorized)
+    ##              (vectorized)
+    ##                   default
 
 ### What are the coefficients?
 
@@ -220,18 +220,18 @@ print(looNormal)
     ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1368.6  77.7
-    ## p_loo       121.2   6.6
-    ## looic      2737.2 155.3
+    ## elpd_loo  -1367.8  77.6
+    ## p_loo       120.4   6.5
+    ## looic      2735.5 155.2
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
     ## Pareto k diagnostic values:
     ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2911  99.9%   301       
-    ##  (0.5, 0.7]   (ok)          2   0.1%   268       
-    ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
-    ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
+    ## (-Inf, 0.5]   (good)     2912  100.0%  778       
+    ##  (0.5, 0.7]   (ok)          1    0.0%  1903      
+    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
+    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
     ## 
     ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
@@ -245,18 +245,18 @@ print(looNormal)
     ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo  -1368.6  77.7
-    ## p_loo       121.2   6.6
-    ## looic      2737.2 155.3
+    ## elpd_loo  -1367.8  77.6
+    ## p_loo       120.4   6.5
+    ## looic      2735.5 155.2
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
     ## Pareto k diagnostic values:
     ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2911  99.9%   301       
-    ##  (0.5, 0.7]   (ok)          2   0.1%   268       
-    ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
-    ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
+    ## (-Inf, 0.5]   (good)     2912  100.0%  778       
+    ##  (0.5, 0.7]   (ok)          1    0.0%  1903      
+    ##    (0.7, 1]   (bad)         0    0.0%  <NA>      
+    ##    (1, Inf)   (very bad)    0    0.0%  <NA>      
     ## 
     ## All Pareto k estimates are ok (k < 0.7).
     ## See help('pareto-k-diagnostic') for details.
@@ -270,9 +270,9 @@ print(looT)
     ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo   -784.4  66.2
-    ## p_loo       165.7   2.5
-    ## looic      1568.9 132.3
+    ## elpd_loo   -784.0  66.2
+    ## p_loo       165.5   2.5
+    ## looic      1568.0 132.3
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -289,7 +289,7 @@ loo_compare(looNormal, looT)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -584.2      44.8
+    ## bm  -583.8      44.7
 
 WAIC criterion
 
@@ -301,7 +301,7 @@ loo_compare(waicNormal, waicT)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -583.9      44.7
+    ## bm  -583.7      44.7
 
 As a last step, let’s do a posterior predictive check:
 
@@ -314,8 +314,7 @@ pp_check(bm2) + xlim(-3,3)
 ### Compare Coefficients
 
 As a final check, let’s compare the coefficients for the normal Bayesian
-mixed effects model and the (hurdle) Lognormal Bayesian mixed effects
-model.
+mixed effects model and the t Distribution Bayesian mixed effects model.
 
 ``` r
 coef_bm_df <- coef_bm$data
@@ -338,7 +337,7 @@ un_error <- joined_models %>%
   rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,TDist_low = `2.5%ile.y`, TDist_high = `97.5%ile.y`) %>%
   select(Parameter, Normal_low, Normal_high, TDist_low, TDist_high) 
 
-var_order <- c("(Intercept)","vis_conditionscatter","vis_conditionhop")
+var_order <- c("(Intercept)","vis_conditionuncertainty","vis_conditionhop")
 
 inner_join(un_coef,un_error,by="Parameter") %>%
   tidyr::pivot_longer(-Parameter) %>%
@@ -369,8 +368,105 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Normal\_Error | Lognormal\_Error | Diff\_Error |
-|:----------------------|--------------:|-----------------:|------------:|
-| (Intercept)           |     0.0160656 |        0.0116663 |       0.004 |
-| vis\_conditionhop     |     0.0232033 |        0.0164091 |       0.007 |
-| vis\_conditionscatter |     0.0230735 |        0.0162590 |       0.007 |
+| Parameter                 | Normal\_Error | Lognormal\_Error | Diff\_Error |
+|:--------------------------|--------------:|-----------------:|------------:|
+| (Intercept)               |     0.0159581 |        0.0113134 |       0.005 |
+| vis\_conditionhop         |     0.0225645 |        0.0166427 |       0.006 |
+| vis\_conditionuncertainty |     0.0231204 |        0.0159625 |       0.007 |
+
+## Candidate models
+
+For model selection, we will consider additional models.
+
+-   `uncertainty_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition`
+
+``` r
+# https://discourse.mc-stan.org/t/smooth-spline-modeling-with-brm/6364
+bm3 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm3, file = "../models/2022/fit_baseline_diff_uncertainty3.rda")
+```
+
+-   `uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition`
+
+``` r
+bm4 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm4, file = "../models/2022/fit_baseline_diff_uncertainty4.rda")
+```
+
+-   `uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition`
+
+``` r
+bm5 <- brms::brm(uncertainty_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition, data = df, family = student(link = "identity", link_sigma = "log", link_nu = "logm1"),, backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm5, file = "../models/2022/fit_baseline_diff_uncertainty5.rda")
+```
+
+``` r
+load("../models/2022/fit_baseline_diff_uncertainty3.rda")
+load("../models/2022/fit_baseline_diff_uncertainty4.rda")
+load("../models/2022/fit_baseline_diff_uncertainty5.rda")
+```
+
+``` r
+waic3 = waic(bm3)
+waic4 = waic(bm4)
+waic5 = waic(bm5)
+```
+
+``` r
+loo_compare(waicNormal, waicT, waic3, waic4, waic5)
+```
+
+    ##     elpd_diff se_diff
+    ## bm5    0.0       0.0 
+    ## bm4   -3.3       2.8 
+    ## bm3   -3.9       3.4 
+    ## bm2   -4.2       4.3 
+    ## bm  -587.9      44.5
+
+``` r
+pp_check(bm5) + xlim(-3,3)
+```
+
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+``` r
+coef_bm5 <- coefplot(bm5)
+coef_bm5
+```
+
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
+## Posterior Predictives
+
+``` r
+library(bayesplot)
+
+# bm2
+
+mcmc_areas(
+  bm2,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
+``` r
+# bm5
+
+mcmc_areas(
+  bm5,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+![](02-vis-2022-uncert-diff_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->

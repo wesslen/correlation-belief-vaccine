@@ -17,20 +17,20 @@ library(lme4)
 library(sjPlot)
 library(dplyr)
 library(brmstools)
+library(modelr)
+library(dplyr)
+library(magrittr)
 theme_set(theme_sjplot())
 ```
 
 ## 2. Load Data
 
 ```{r load-data}
-#file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
-file_output = "../data/vis2022/model_data.csv"
-#download.file(file_url,file_output)
 df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
-levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
+levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
 ```
 
 ```{r}
@@ -49,9 +49,6 @@ sum(is.na(df$abs_belief_difference))
 # Absolute Belief Distance
 # first model is normal response
 m1 = lmer(abs_belief_difference ~ vis_condition +  (1|user_token), df)
-
-# second model is lognormal response
-#m2 = glmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df, family = gaussian(link = "log"))
 ```
 
 ```{r}
@@ -65,17 +62,17 @@ a <- plot_model(m1,show.values = TRUE, vline.color = "grey", value.offset = .4, 
 a
 ```
 
-## 4a. Absolute Belief Difference
+## 4. Absolute Belief Difference
 
 ### Bayesian Mixed Effects
 
-Let's examine the first regression to estimate the effect on the absolute belief change (`diffBeliefAbs`). We'll use the same functional form as model `m`.
+Let's examine the first regression to estimate the effect on the absolute belief change (`abs_belief_difference`). We'll use the same functional form as model `m`.
 
 ```{r eval=FALSE, include=TRUE}
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm, file = "../models/2022/fit_baseline_abs_belief.rda")
 ```
@@ -140,9 +137,7 @@ pp_check(bm)
 Let's try instead a lognormal likelihood (specifically the `hurdle_lognormal` because we have a handful of cases where diffBeliefAbs equals zero (see [brms comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2))).
 
 ```{r include=TRUE,eval=FALSE}
-df$diffBeliefAbsAdjusted <- ifelse(df$abs_belief_difference==0,0.01,df$abs_belief_difference)
-
-bm2 <- brms::brm(diffBeliefAbsAdjusted ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"))
+bm2 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm2, file = "../models/2022/fit_baseline_abs_belief2.rda")
 ```
@@ -168,11 +163,6 @@ coef_bm2
 ### Model Comparison
 
 First, let's use leave-one-out (loo) cross-validation. It will also provide estimate to determine point leverage (aka outliers).
-
-```{r}
-looNormal <- loo(bm, save_psis = TRUE)
-print(looNormal)
-```
 
 ```{r}
 looNormal <- loo(bm, save_psis = TRUE)
@@ -230,7 +220,7 @@ un_error <- joined_models %>%
   rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,Lognormal_low = `2.5%ile.y`, Lognormal_high = `97.5%ile.y`) %>%
   select(Parameter, Normal_low, Normal_high, Lognormal_low, Lognormal_high) 
 
-var_order <- c("(Intercept)","vis_conditionscatter","vis_conditionhop")
+var_order <- c("(Intercept)","vis_conditionuncertainty","vis_conditionhop")
 
 inner_join(un_coef,un_error,by="Parameter") %>%
   tidyr::pivot_longer(-Parameter) %>%
@@ -258,5 +248,90 @@ joined_models %>%
   mutate(Diff_Error = round(Normal_Error - Lognormal_Error,3)) %>%
   knitr::kable()
 ```
+
+## Candidate models
+
+For model selection, we will consider additional models.
+
+* `abs_belief_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+# https://discourse.mc-stan.org/t/smooth-spline-modeling-with-brm/6364
+bm3 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm3, file = "../models/2022/fit_baseline_abs_belief3.rda")
+```
+
+* `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+bm4 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm4, file = "../models/2022/fit_baseline_abs_belief4.rda")
+```
+
+* `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition`
+
+```{r include=TRUE,eval=FALSE}
+bm5 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
+```
+
+```{r}
+load("../models/2022/fit_baseline_abs_belief3.rda")
+load("../models/2022/fit_baseline_abs_belief4.rda")
+load("../models/2022/fit_baseline_abs_belief5.rda")
+```
+
+```{r}
+waic3 = waic(bm3)
+waic4 = waic(bm4)
+waic5 = waic(bm5)
+```
+
+```{r}
+loo_compare(waicNormal, waicLog, waic3, waic4, waic5)
+```
+
+
+```{r}
+pp_check(bm5) + xlim(-1,3)
+```
+
+```{r}
+coef_bm5 <- coefplot(bm5)
+coef_bm5
+```
+
+## Posterior Predictives
+
+```{r}
+library(bayesplot)
+
+# bm2
+
+mcmc_areas(
+  bm2,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+```{r}
+# bm5
+
+mcmc_areas(
+  bm5,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+
 
 

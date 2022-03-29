@@ -10,20 +10,20 @@ library(lme4)
 library(sjPlot)
 library(dplyr)
 library(brmstools)
+library(modelr)
+library(dplyr)
+library(magrittr)
 theme_set(theme_sjplot())
 ```
 
 ## 2. Load Data
 
 ``` r
-#file_url = "https://drive.google.com/file/d/1QKkAmK5VXkm8CVP_QjjBUsfuMw5t3x5W/view?usp=sharing"
-file_output = "../data/vis2022/model_data.csv"
-#download.file(file_url,file_output)
 df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
 
 # refactor and categorize
 df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
-levels(df$vis_condition ) <- c("uncertainty","scatter","hop")
+levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
 ```
 
 ``` r
@@ -45,9 +45,6 @@ sum(is.na(df$abs_belief_difference))
 # Absolute Belief Distance
 # first model is normal response
 m1 = lmer(abs_belief_difference ~ vis_condition +  (1|user_token), df)
-
-# second model is lognormal response
-#m2 = glmer(diffBeliefAbs ~ vis_condition +  (1|user_token), df, family = gaussian(link = "log"))
 ```
 
 ``` r
@@ -63,19 +60,19 @@ a
 
 ![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-## 4a. Absolute Belief Difference
+## 4. Absolute Belief Difference
 
 ### Bayesian Mixed Effects
 
 Let’s examine the first regression to estimate the effect on the
-absolute belief change (`diffBeliefAbs`). We’ll use the same functional
-form as model `m`.
+absolute belief change (`abs_belief_difference`). We’ll use the same
+functional form as model `m`.
 
 ``` r
 library(brms)
 
 # assume normal response variable
-bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df)
+bm <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm, file = "../models/2022/fit_baseline_abs_belief.rda")
 ```
@@ -112,11 +109,11 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
-|:----------------------|-------------------:|---------------:|----------:|
-| (Intercept)           |          0.4178505 |      0.4249126 |     0.007 |
-| vis\_conditionhop     |         -0.0177092 |     -0.0248383 |     0.007 |
-| vis\_conditionscatter |         -0.0101661 |     -0.0260293 |     0.016 |
+| Parameter                 | Bayesian\_Estimate | Freq\_Estimate | abs\_diff |
+|:--------------------------|-------------------:|---------------:|----------:|
+| (Intercept)               |          0.4245373 |      0.4249126 |     0.000 |
+| vis\_conditionhop         |         -0.0248699 |     -0.0248383 |     0.000 |
+| vis\_conditionuncertainty |         -0.0254608 |     -0.0260293 |     0.001 |
 
 We see the same for the coefficients standard errors (though they mean
 slightly different things):
@@ -129,11 +126,11 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
-|:----------------------|----------------:|------------:|-----------------:|
-| (Intercept)           |       0.0206086 |   0.0195949 |            0.001 |
-| vis\_conditionhop     |       0.0299879 |   0.0277424 |            0.002 |
-| vis\_conditionscatter |       0.0305282 |   0.0280821 |            0.002 |
+| Parameter                 | Bayesian\_Error | Freq\_Error | abs\_diff\_error |
+|:--------------------------|----------------:|------------:|-----------------:|
+| (Intercept)               |       0.0198700 |   0.0195949 |            0.000 |
+| vis\_conditionhop         |       0.0286119 |   0.0277424 |            0.001 |
+| vis\_conditionuncertainty |       0.0285199 |   0.0280821 |            0.000 |
 
 ### Model convergence / posterior predictive check
 
@@ -164,9 +161,7 @@ diffBeliefAbs equals zero (see [brms
 comment](https://discourse.mc-stan.org/t/convergence-fails-for-every-truncated-gaussian-model/10040/2))).
 
 ``` r
-df$diffBeliefAbsAdjusted <- ifelse(df$abs_belief_difference==0,0.01,df$abs_belief_difference)
-
-bm2 <- brms::brm(diffBeliefAbsAdjusted ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"))
+bm2 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token), data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
 
 save(bm2, file = "../models/2022/fit_baseline_abs_belief2.rda")
 ```
@@ -181,26 +176,26 @@ load("../models/2022/fit_baseline_abs_belief2.rda")
 bm2$prior
 ```
 
-    ##                    prior     class                 coef      group resp dpar
-    ##                   (flat)         b                                          
-    ##                   (flat)         b     vis_conditionhop                     
-    ##                   (flat)         b vis_conditionscatter                     
-    ##               beta(1, 1)        hu                                          
-    ##  student_t(3, -1.3, 2.5) Intercept                                          
-    ##     student_t(3, 0, 2.5)        sd                                          
-    ##     student_t(3, 0, 2.5)        sd                      user_token          
-    ##     student_t(3, 0, 2.5)        sd            Intercept user_token          
-    ##     student_t(3, 0, 2.5)     sigma                                          
-    ##  nlpar bound       source
-    ##                   default
-    ##              (vectorized)
-    ##              (vectorized)
-    ##                   default
-    ##                   default
-    ##                   default
-    ##              (vectorized)
-    ##              (vectorized)
-    ##                   default
+    ##                    prior     class                     coef      group resp
+    ##                   (flat)         b                                         
+    ##                   (flat)         b         vis_conditionhop                
+    ##                   (flat)         b vis_conditionuncertainty                
+    ##               beta(1, 1)        hu                                         
+    ##  student_t(3, -1.3, 2.5) Intercept                                         
+    ##     student_t(3, 0, 2.5)        sd                                         
+    ##     student_t(3, 0, 2.5)        sd                          user_token     
+    ##     student_t(3, 0, 2.5)        sd                Intercept user_token     
+    ##     student_t(3, 0, 2.5)     sigma                                         
+    ##  dpar nlpar bound       source
+    ##                        default
+    ##                   (vectorized)
+    ##                   (vectorized)
+    ##                        default
+    ##                        default
+    ##                        default
+    ##                   (vectorized)
+    ##                   (vectorized)
+    ##                        default
 
 ### What are the coefficients?
 
@@ -222,30 +217,12 @@ print(looNormal)
 ```
 
     ## 
-    ## Computed from 4000 by 2532 log-likelihood matrix
+    ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
-    ##          Estimate   SE
-    ## elpd_loo  -1250.3 48.4
-    ## p_loo       132.3  5.0
-    ## looic      2500.6 96.7
-    ## ------
-    ## Monte Carlo SE of elpd_loo is 0.2.
-    ## 
-    ## All Pareto k estimates are good (k < 0.5).
-    ## See help('pareto-k-diagnostic') for details.
-
-``` r
-looNormal <- loo(bm, save_psis = TRUE)
-print(looNormal)
-```
-
-    ## 
-    ## Computed from 4000 by 2532 log-likelihood matrix
-    ## 
-    ##          Estimate   SE
-    ## elpd_loo  -1250.3 48.4
-    ## p_loo       132.3  5.0
-    ## looic      2500.6 96.7
+    ##          Estimate    SE
+    ## elpd_loo  -1335.6  50.9
+    ## p_loo       164.5   5.7
+    ## looic      2671.3 101.8
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
@@ -258,23 +235,16 @@ print(looLog)
 ```
 
     ## 
-    ## Computed from 4000 by 2532 log-likelihood matrix
+    ## Computed from 4000 by 2913 log-likelihood matrix
     ## 
     ##          Estimate    SE
-    ## elpd_loo   -485.7  60.9
-    ## p_loo       112.7   4.5
-    ## looic       971.3 121.8
+    ## elpd_loo   -712.7  66.2
+    ## p_loo       150.6   5.7
+    ## looic      1425.4 132.5
     ## ------
     ## Monte Carlo SE of elpd_loo is 0.2.
     ## 
-    ## Pareto k diagnostic values:
-    ##                          Count Pct.    Min. n_eff
-    ## (-Inf, 0.5]   (good)     2530  99.9%   1150      
-    ##  (0.5, 0.7]   (ok)          2   0.1%   309       
-    ##    (0.7, 1]   (bad)         0   0.0%   <NA>      
-    ##    (1, Inf)   (very bad)    0   0.0%   <NA>      
-    ## 
-    ## All Pareto k estimates are ok (k < 0.7).
+    ## All Pareto k estimates are good (k < 0.5).
     ## See help('pareto-k-diagnostic') for details.
 
 When comparing two fitted models, we can estimate the difference in
@@ -287,7 +257,7 @@ loo_compare(looNormal, looLog)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -764.6      55.1
+    ## bm  -622.9      59.9
 
 WAIC criterion
 
@@ -299,7 +269,7 @@ loo_compare(waicNormal, waicLog)
 
     ##     elpd_diff se_diff
     ## bm2    0.0       0.0 
-    ## bm  -764.6      55.1
+    ## bm  -622.7      59.9
 
 As a last step, let’s do a posterior predictive check:
 
@@ -307,7 +277,7 @@ As a last step, let’s do a posterior predictive check:
 pp_check(bm2) + xlim(-1,3)
 ```
 
-![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ### Compare Coefficients
 
@@ -336,7 +306,7 @@ un_error <- joined_models %>%
   rename(Normal_low = `2.5%ile.x`, Normal_high = `97.5%ile.x`,Lognormal_low = `2.5%ile.y`, Lognormal_high = `97.5%ile.y`) %>%
   select(Parameter, Normal_low, Normal_high, Lognormal_low, Lognormal_high) 
 
-var_order <- c("(Intercept)","vis_conditionscatter","vis_conditionhop")
+var_order <- c("(Intercept)","vis_conditionuncertainty","vis_conditionhop")
 
 inner_join(un_coef,un_error,by="Parameter") %>%
   tidyr::pivot_longer(-Parameter) %>%
@@ -355,7 +325,7 @@ inner_join(un_coef,un_error,by="Parameter") %>%
   coord_flip()
 ```
 
-![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 We see the same for the coefficients standard errors:
 
@@ -367,8 +337,105 @@ joined_models %>%
   knitr::kable()
 ```
 
-| Parameter             | Normal\_Error | Lognormal\_Error | Diff\_Error |
-|:----------------------|--------------:|-----------------:|------------:|
-| (Intercept)           |     0.0206086 |        0.0640709 |      -0.043 |
-| vis\_conditionhop     |     0.0299879 |        0.0957013 |      -0.066 |
-| vis\_conditionscatter |     0.0305282 |        0.0982067 |      -0.068 |
+| Parameter                 | Normal\_Error | Lognormal\_Error | Diff\_Error |
+|:--------------------------|--------------:|-----------------:|------------:|
+| (Intercept)               |     0.0198700 |        0.0651396 |      -0.045 |
+| vis\_conditionhop         |     0.0286119 |        0.0931659 |      -0.065 |
+| vis\_conditionuncertainty |     0.0285199 |        0.0932265 |      -0.065 |
+
+## Candidate models
+
+For model selection, we will consider additional models.
+
+-   `abs_belief_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition`
+
+``` r
+# https://discourse.mc-stan.org/t/smooth-spline-modeling-with-brm/6364
+bm3 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm3, file = "../models/2022/fit_baseline_abs_belief3.rda")
+```
+
+-   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition`
+
+``` r
+bm4 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm4, file = "../models/2022/fit_baseline_abs_belief4.rda")
+```
+
+-   `abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition`
+
+``` r
+bm5 <- brms::brm(abs_belief_difference ~ vis_condition + (1|user_token) + pre_belief_distance * vis_condition + true_correlation * vis_condition, data = df, family = hurdle_lognormal(link = "identity", link_sigma = "log"), backend = "cmdstanr", cores = parallel::detectCores() - 1)
+
+save(bm5, file = "../models/2022/fit_baseline_abs_belief5.rda")
+```
+
+``` r
+load("../models/2022/fit_baseline_abs_belief3.rda")
+load("../models/2022/fit_baseline_abs_belief4.rda")
+load("../models/2022/fit_baseline_abs_belief5.rda")
+```
+
+``` r
+waic3 = waic(bm3)
+waic4 = waic(bm4)
+waic5 = waic(bm5)
+```
+
+``` r
+loo_compare(waicNormal, waicLog, waic3, waic4, waic5)
+```
+
+    ##     elpd_diff se_diff
+    ## bm5    0.0       0.0 
+    ## bm4   -2.3       3.7 
+    ## bm2   -3.5       4.9 
+    ## bm3   -4.5       4.6 
+    ## bm  -626.2      60.2
+
+``` r
+pp_check(bm5) + xlim(-1,3)
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+
+``` r
+coef_bm5 <- coefplot(bm5)
+coef_bm5
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+## Posterior Predictives
+
+``` r
+library(bayesplot)
+
+# bm2
+
+mcmc_areas(
+  bm2,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
+``` r
+# bm5
+
+mcmc_areas(
+  bm5,
+  pars = c("b_vis_conditionuncertainty","b_vis_conditionhop"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+```
+
+![](01-vis-2022-abs-belief_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
