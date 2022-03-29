@@ -1,0 +1,119 @@
+---
+title: "Study 1 Models"
+subtitle: Vis 2022 Posteriors
+output: rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load models
+
+```{r}
+library(brms)
+
+df <- readr::read_csv("../data/vis2022/belief_data_prolific_all_exclude.csv")
+
+# refactor and categorize
+df$vis_condition <- factor(df$vis_condition, c("uncertainty","scatter","hop"))
+levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
+```
+
+```{r}
+library(sjPlot)
+library(ggplot2)
+```
+
+
+## Absolute Belief Models
+
+```{r}
+load("../models/2022/fit_baseline_abs_belief2.rda")
+load("../models/2022/fit_baseline_abs_belief5.rda")
+load("../models/2022/fit_baseline_abs_belief6.rda")
+```
+
+### Baseline
+
+```{r}
+bm2
+```
+
+```{r}
+tab_model(bm2)
+```
+
+### BM5
+
+```{r}
+bm5
+```
+
+```{r}
+tab_model(bm5)
+```
+
+### BM6
+
+```{r}
+bm6
+```
+
+```{r}
+tab_model(bm6)
+```
+
+```{r}
+plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = "Marginal Effects for Abs Belief Change",
+       x = "Pre Attitude Strength",
+       y = "Abs Belief Difference")
+```
+
+
+## Uncertainty Difference Models
+
+```{r}
+load("../models/2022/fit_baseline_diff_uncertainty2.rda")
+load("../models/2022/fit_baseline_diff_uncertainty5.rda")
+load("../models/2022/fit_baseline_diff_uncertainty6.rda")
+```
+
+### Baseline
+
+```{r}
+bm2
+```
+
+```{r}
+tab_model(bm2)
+```
+
+### BM5
+
+```{r}
+bm5
+```
+
+```{r}
+tab_model(bm5)
+```
+
+### BM6
+
+```{r}
+bm6
+```
+
+```{r}
+tab_model(bm6)
+```
+
+```{r}
+plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = "Marginal Effects for Uncertainty Difference",
+       x = "Pre Attitude Strength",
+       y = "Uncertainty Difference")
+```
+
