@@ -21,6 +21,16 @@ library(brms)
     ##     ar
 
 ``` r
+library(sjPlot)
+library(brmstools)
+```
+
+    ## Loading required package: ggplot2
+
+    ## Warning: replacing previous import 'brms::ar' by 'stats::ar' when loading
+    ## 'brmstools'
+
+``` r
 df <- readr::read_csv("../data/belief_data_prolific_all_exclude.csv")
 ```
 
@@ -44,11 +54,6 @@ levels(df$vis_condition ) <- c("scatter","uncertainty","hop")
 
 ``` r
 library(sjPlot)
-```
-
-    ## #refugeeswelcome
-
-``` r
 library(ggplot2)
 ```
 
@@ -616,15 +621,52 @@ Marginal R<sup>2</sup> / Conditional R<sup>2</sup>
 </table>
 
 ``` r
-plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
-  labs(title = "Marginal Effects for Abs Belief Change",
+pInter1 <- plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = " ",
        x = "Pre Attitude Strength",
-       y = "Abs Belief Difference")
+       y = "Absolute Belief Difference")  +
+  scale_color_discrete(name = "Vis Condition", labels = c("Scatter","Cone","HOPs"))
 ```
 
     ## Note: uncertainty of error terms are not taken into account. You may want to use `rstantools::posterior_predict()`.
 
-![](03-vis-2022-posterior_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+    ## Scale for 'colour' is already present. Adding another scale for 'colour',
+    ## which will replace the existing scale.
+
+``` r
+pCond1 <- coefplot(bm6, pars = c("vis_conditionuncertainty","vis_conditionhop")) +
+  scale_y_discrete(labels = c("vis_conditionuncertainty" = "Cone","vis_conditionhop" = "HOPs")) +
+  labs(x = "Absolute belief change", y = "") +
+  xlim(-.6,.6) +
+  geom_vline(xintercept = 0)
+```
+
+    ## Warning: 'coefplot' is deprecated.
+    ## Use 'tidybayes' instead.
+    ## See help("Deprecated")
+
+    ## Warning: 'tidycoef' is deprecated.
+    ## Use 'tidybayes' instead.
+    ## See help("Deprecated")
+
+    ## Warning in if (is.na(pars)) {: the condition has length > 1 and only the first
+    ## element will be used
+
+    ## Warning: `gather_()` was deprecated in tidyr 1.2.0.
+    ## Please use `gather()` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
+
+    ## Warning: `group_by_()` was deprecated in dplyr 0.7.0.
+    ## Please use `group_by()` instead.
+    ## See vignette('programming') for more help
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
+
+    ## Warning: `summarise_()` was deprecated in dplyr 0.7.0.
+    ## Please use `summarise()` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
 
 ## Uncertainty Difference Models
 
@@ -1190,12 +1232,55 @@ Marginal R<sup>2</sup> / Conditional R<sup>2</sup>
 </table>
 
 ``` r
-plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
-  labs(title = "Marginal Effects for Uncertainty Difference",
+pInter2 <- plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = " ",
        x = "Pre Attitude Strength",
-       y = "Uncertainty Difference")
+       y = "Uncertainty Difference") +
+  scale_color_discrete(name = "Vis Condition", labels = c("Scatter","Cone","HOPs"))
 ```
 
     ## Note: uncertainty of error terms are not taken into account. You may want to use `rstantools::posterior_predict()`.
 
-![](03-vis-2022-posterior_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+    ## Scale for 'colour' is already present. Adding another scale for 'colour',
+    ## which will replace the existing scale.
+
+``` r
+pCond2 <- coefplot(bm6, pars = c("vis_conditionuncertainty","vis_conditionhop")) +
+  scale_y_discrete(labels = c("vis_conditionuncertainty" = "Cone","vis_conditionhop" = "HOPs")) +
+  labs(x = "Uncertainty difference", y = "") +
+  xlim(-.1,.1) +
+  geom_vline(xintercept = 0)
+```
+
+    ## Warning: 'coefplot' is deprecated.
+    ## Use 'tidybayes' instead.
+    ## See help("Deprecated")
+
+    ## Warning: 'tidycoef' is deprecated.
+    ## Use 'tidybayes' instead.
+    ## See help("Deprecated")
+
+    ## Warning in if (is.na(pars)) {: the condition has length > 1 and only the first
+    ## element will be used
+
+``` r
+library(patchwork)
+
+(pInter1 + pInter2) + plot_layout(guides = "collect")
+```
+
+![](03-vis-2022-posterior_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+``` r
+ggsave("../img/posterior-attitude.pdf", width = 8, height = 4)
+```
+
+``` r
+(pCond1 + pCond2) + plot_layout(guides = "collect")
+```
+
+![](03-vis-2022-posterior_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+ggsave("../img/me-uncertainty.pdf", width = 8, height = 2)
+```

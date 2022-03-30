@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(brms)
+library(sjPlot)
+library(brmstools)
 
 df <- readr::read_csv("../data/belief_data_prolific_all_exclude.csv")
 
@@ -65,10 +67,19 @@ tab_model(bm6)
 ```
 
 ```{r}
-plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
-  labs(title = "Marginal Effects for Abs Belief Change",
+pInter1 <- plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = " ",
        x = "Pre Attitude Strength",
-       y = "Abs Belief Difference")
+       y = "Absolute Belief Difference")  +
+  scale_color_discrete(name = "Vis Condition", labels = c("Scatter","Cone","HOPs"))
+```
+
+```{r}
+pCond1 <- coefplot(bm6, pars = c("vis_conditionuncertainty","vis_conditionhop")) +
+  scale_y_discrete(labels = c("vis_conditionuncertainty" = "Cone","vis_conditionhop" = "HOPs")) +
+  labs(x = "Absolute belief change", y = "") +
+  xlim(-.6,.6) +
+  geom_vline(xintercept = 0)
 ```
 
 
@@ -111,9 +122,33 @@ tab_model(bm6)
 ```
 
 ```{r}
-plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
-  labs(title = "Marginal Effects for Uncertainty Difference",
+pInter2 <- plot_model(bm6, type = "pred", terms = c("pre_attitude_strength","vis_condition")) +
+  labs(title = " ",
        x = "Pre Attitude Strength",
-       y = "Uncertainty Difference")
+       y = "Uncertainty Difference") +
+  scale_color_discrete(name = "Vis Condition", labels = c("Scatter","Cone","HOPs"))
+```
+
+```{r}
+pCond2 <- coefplot(bm6, pars = c("vis_conditionuncertainty","vis_conditionhop")) +
+  scale_y_discrete(labels = c("vis_conditionuncertainty" = "Cone","vis_conditionhop" = "HOPs")) +
+  labs(x = "Uncertainty difference", y = "") +
+  xlim(-.1,.1) +
+  geom_vline(xintercept = 0)
+```
+
+
+```{r}
+library(patchwork)
+
+(pInter1 + pInter2) + plot_layout(guides = "collect")
+
+ggsave("../img/posterior-attitude.pdf", width = 8, height = 4)
+```
+
+```{r}
+(pCond1 + pCond2) + plot_layout(guides = "collect")
+
+ggsave("../img/me-uncertainty.pdf", width = 8, height = 2)
 ```
 
